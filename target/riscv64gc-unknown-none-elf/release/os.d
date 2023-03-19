@@ -1,0 +1,1 @@
+/mnt/c/Users/Bariona/Desktop/os/target/riscv64gc-unknown-none-elf/release/os: /mnt/c/Users/Bariona/Desktop/os/src/console.rs /mnt/c/Users/Bariona/Desktop/os/src/entry.asm /mnt/c/Users/Bariona/Desktop/os/src/lang_items.rs /mnt/c/Users/Bariona/Desktop/os/src/main.rs /mnt/c/Users/Bariona/Desktop/os/src/sbi.rs

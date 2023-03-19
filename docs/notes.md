@@ -1,4 +1,4 @@
-### How PC runs?
+### How computer runs?
 
 [ref](https://www.ruanyifeng.com/blog/2013/02/booting.html)
 
@@ -23,3 +23,16 @@
 3. MBR (Master boot record 主引导记录)
 
     usually it tells the computer how to find the kernel code.
+
+
+
+### ASM
+
+- pc：points to current instruction
+
+    expect those instructions who modify pc (e.g. AUIPC), otherwise it will do `pc += 4` automatically.
+
+
+### Makefile
+
+- $@: 目标文件
