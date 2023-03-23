@@ -15,6 +15,7 @@ mod config;
 mod sync;
 mod sbi;
 mod lang_items; // panic_handler
+mod vga_buffer;
 mod mm;
 
 use core::arch::global_asm;
@@ -26,8 +27,10 @@ global_asm!(include_str!("link_app.S"));
 
 #[no_mangle]
 pub fn rust_main() -> ! {
+	// print_something();
 	clear_bss();
-	println!("Hello, World!");
+	println!("Hello, OS World!");
+	mm::init();
 	shutdown();
 }
 
@@ -36,8 +39,8 @@ fn clear_bss() {
 		fn sbss();
 		fn ebss();
 	}
-	(sbss as usize..ebss as usize).for_each(|a| {
-		println!("write {}", a);
-		unsafe { (a as *mut u8).write_volatile(0) }
-	});
+	unsafe {
+		core::slice::from_raw_parts_mut(sbss as usize as *mut u8, ebss as usize - sbss as usize)
+			.fill(0);
+	}
 }

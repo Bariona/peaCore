@@ -7,14 +7,14 @@ use super::{address::{PhysPageNum, VirtPageNum}, frame_allocator::{FrameTracker,
 
 bitflags! {
   pub struct PTEFlags: u8 {
-    const V = 1 << 0;
-    const R = 1 << 1;
-    const W = 1 << 2;
-    const X = 1 << 3;
-    const U = 1 << 4;
-    const G = 1 << 5;
-    const A = 1 << 6;
-    const D = 1 << 7;
+    const V = 1 << 0; // valid 
+    const R = 1 << 1; // read
+    const W = 1 << 2; // write
+    const X = 1 << 3; // execute
+    const U = 1 << 4; // accessible to U-mode(U = 1)
+    const G = 1 << 5; // global (exist in all address space)
+    const A = 1 << 6; // indicates the virtual page has been read, written, or fetched from since the last time the A bit was cleared
+    const D = 1 << 7; // dirty
   }
 }
 
@@ -60,6 +60,7 @@ impl PageTableEntry {
   }
 }
 
+/// page table's all physical frames
 pub struct PageTable {
   root_ppn: PhysPageNum,
   frames: Vec<FrameTracker>
@@ -133,7 +134,7 @@ impl PageTable {
 
   /// set a virtual page as invalid
   pub fn unmap(&mut self, vpn: VirtPageNum) {
-    let pte = self.find_pte_create(vpn).unwrap();
+    let pte = self.find_pte(vpn).unwrap();
     assert!(pte.is_valid(), "vpn {:?} is invalid before mapping", vpn);
     *pte = PageTableEntry::empty();
   }
@@ -143,3 +144,9 @@ impl PageTable {
     self.find_pte(vpn).map(|pte| *pte)
   }
 }
+
+
+
+// pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&'static mut [u8]> {
+
+// }
