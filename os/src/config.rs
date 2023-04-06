@@ -10,3 +10,6 @@ pub const PAGE_SIZE: usize = 1 << PAGE_SIZE_BITS; // 4k
 
 
 pub const TRAMPOLINE: usize = usize::MAX - PAGE_SIZE + 1;
+pub const TRAP_CONTEXT: usize = TRAMPOLINE - PAGE_SIZE;
+
+pub use crate::board::CLOCK_FREQ;

@@ -2,8 +2,9 @@ use alloc::vec::Vec;
 use bitflags::bitflags;
 
 use alloc::vec;
+use riscv::addr::{Address};
 
-use super::{address::{PhysPageNum, VirtPageNum}, frame_allocator::{FrameTracker, frame_alloc}};
+use super::{address::{PhysPageNum, VirtPageNum, VirtAddr, StepByOne}, frame_allocator::{FrameTracker, frame_alloc}};
 
 bitflags! {
   pub struct PTEFlags: u8 {
@@ -85,6 +86,12 @@ impl PageTable {
     }
   } 
 
+  /// Returns `satp` 
+  pub fn token(&self) -> usize {
+    // `8` means enable page_table
+    8usize << 60 | self.root_ppn.0
+  }
+
   /// find PTE, if page table doesn't exists, then create one.
   fn find_pte_create(&mut self, vpn: VirtPageNum) -> Option<&mut PageTableEntry> {
     let idxs = vpn.indexes();
@@ -146,7 +153,27 @@ impl PageTable {
 }
 
 
+/// translate a pointer to a mutable u8 Vec through page table
+pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&'static mut [u8]> {
+  let page_table = PageTable::from_token(token); // get base page
+  let mut start = ptr as usize;
+  let end = start + len;
+  let mut bytes = Vec::new();
 
-// pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&'static mut [u8]> {
-
-// }
+  while start < end {
+    let start_va = VirtAddr::from(start);
+    let mut start_vpn = start_va.floor();
+    let start_ppn = page_table.translate(start_vpn).unwrap().ppn();
+    start_vpn.step();
+    let mut end_va: VirtAddr = start_vpn.into();
+    end_va = end_va.min(VirtAddr::from(end));
+    if end_va.page_offset() != 0 {
+      bytes.push(&mut start_ppn.get_bytes_array()[start_va.page_offset()..end_va.page_offset()]);
+    } else {
+      bytes.push(&mut start_ppn.get_bytes_array()[start_va.page_offset()..]);
+    }
+    start = end_va.into();
+  }
+  
+  bytes
+}

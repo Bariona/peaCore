@@ -1,6 +1,8 @@
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
+
+/// VGA Mode
 pub enum Color {
   Black = 0,
   Blue = 1,
@@ -93,7 +95,7 @@ pub fn print_something() {
   let mut writer = Writer {
     column_position: 0,
     color_code: ColorCode::new(Color::Yellow, Color::Black),
-    buffer: unsafe { &mut *(0x1000_0000 as *mut Buffer) },
+    buffer: unsafe { &mut *(UART as *mut Buffer) },
   };
 
   writer.write_byte(b'H');
@@ -107,7 +109,7 @@ const UART: usize = 0x1000_0000;
 #[allow(unused)]
 fn print_char_recu(bytes: &[u8]) {
 	if let [head, tail @ ..] = bytes {
-			unsafe { (UART as *mut u8).write_volatile(*head) };
-			print_char_recu(tail);
+    unsafe { (UART as *mut u8).write_volatile(*head) };
+    print_char_recu(tail);
 	}
 }

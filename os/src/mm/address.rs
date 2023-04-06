@@ -210,6 +210,7 @@ where T: StepByOne + Copy + PartialEq + PartialOrd + Debug {
 
 impl<T> SimpleRange<T> 
 where T: StepByOne + Copy + PartialEq + PartialOrd + Debug {
+  /// range[start, end]
   pub fn new(start: T, end: T) -> Self {
     assert!(start <= end, "start{:?} > end{:?}", start, end);
     Self { l: start, r: end }

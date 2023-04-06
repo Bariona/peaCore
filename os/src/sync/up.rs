@@ -25,6 +25,11 @@ impl<T> UPSafeCell<T> {
     Self { inner: RefCell::new(value) }
   }
 
+  /// more strict that `RefCell<T>` since we not only guarantee that there 
+  /// 
+  /// will be at most one thing that can modify it but also 
+  /// 
+  /// one that can read it.
   pub fn exclusive_access(&self) -> RefMut<'_, T> {
     self.inner.borrow_mut()
   }

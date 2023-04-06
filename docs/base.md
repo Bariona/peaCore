@@ -15,26 +15,25 @@ If it doesn't support riscv64, try `riscv64-unknown-elf-gdb`.
 
 ### GDB
 - b: create breakpoint
+
+- bt: display the call stack(backtrace) of the program
+
+   For example, `bt 5` will only display the first 5 levels of the call stack of the current execution context.
+
 - cont: continue running
+
 - n: run next command without entering the function
+
 - ni: run next instruction...
+
 - s: 
+
 - si: 
+
 - x/10i \<addr\>: shows the 10 instructions staring at addr
+
+- p/x $pc: show register's value
+
 - wa: add watch point on var/mem
 
-
-### Rust
-
-- [#macro_use]: use the macro declared in the following crate.
-
-- [#link_section]: 
-
-    指定了输出对象文件中函数或静态项的内容将被放置到的节点位置。
-
-    ```rust
-    #[no_mangle]
-    #[link_section = ".example_section"]
-    pub static VAR1: u32 = 1;
-    ```
-- [build scripts: build.rs](https://course.rs/cargo/reference/build-script/intro.html)
+- undisplay 3: del 3rd breakpint

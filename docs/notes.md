@@ -26,12 +26,27 @@
 
 
 
-### ASM
+### RISCV
 
 - pc：points to current instruction
 
     expect those instructions who modify pc (e.g. AUIPC), otherwise it will do `pc += 4` automatically.
 
+- csrr/csrw: Control State Register Read/Write
+
+
+- sepc: When a trap is taken into S-mode, sepc is written with the virtual address of the instruction that
+encountered the exception.
+
+- scause: When a trap is taken into S-mode, scause is written with a code indicating the event that caused the trap.
+
+- sscratch: is used to hold a pointer to the hart-local supervisor context while the hart is
+executing user code. 
+
+> hart: hardware thread
+
+- satp: This register holds the **physical** page number (PPN) of the root page table, i.e., its supervisor physical address
+divided by 4 KiB.
 
 ### Makefile
 
