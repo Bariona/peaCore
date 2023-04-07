@@ -111,6 +111,11 @@ impl TaskManager {
     } else {
       println!("All applications completed!");
       use crate::board::QEMUExit;
+      // use riscv::register::{sstatus, stvec};
+      // println!("stvec: {:#x}", stvec::read().address());
+      // if (sstatus::read().spp() == sstatus::SPP::Supervisor) {
+      //   println!("S-mode");
+      // }
       crate::board::QEMU_EXIT_HANDLE.exit_success();
     }
   }

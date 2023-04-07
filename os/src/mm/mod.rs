@@ -1,5 +1,6 @@
 use self::{heap_allocator::init_heap, frame_allocator::init_frame_allocator, memory_set::KERNEL_SPACE};
 
+mod ds;
 pub mod address;
 pub mod memory_set;
 pub use memory_set::remap_test;

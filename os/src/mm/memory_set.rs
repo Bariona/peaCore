@@ -5,6 +5,7 @@ use alloc::{collections::BTreeMap, sync::Arc};
 use bitflags::bitflags;
 use alloc::vec::Vec;
 use riscv::register::satp;
+use crate::board::MMIO;
 use crate::{config::{PAGE_SIZE, TRAMPOLINE, MEMORY_ENDPOINT, USER_STACK_SIZE, TRAP_CONTEXT}, mm::address::StepByOne, sync::up::UPSafeCell};
 
 use super::{page_table::{PageTable, PTEFlags, PageTableEntry}, address::{VPNRange, VirtPageNum, VirtAddr, PhysPageNum, PhysAddr}, frame_allocator::{FrameTracker, frame_alloc}};
@@ -131,6 +132,17 @@ impl MemorySet {
       ),
       None,
     );
+    for pair in MMIO {
+      memory_set.push(
+        MapArea::new(
+          (*pair).0.into(),
+          ((*pair).0 + (*pair).1).into(),
+          MapType::Identical,
+          MapPermission::R | MapPermission::W,
+        ),
+        None,
+      );
+  }
     memory_set
   }
 
@@ -319,8 +331,9 @@ impl MapArea {
   }
 
   pub fn copy_data(&mut self, page_table: &mut PageTable, data: &[u8]) {
-    // TODO: HOW CAN you simply visit the physical memory??
-    // Answer(current): because in S-mode, we are directly mapped.
+    // Question: HOW can you simply visit the physical memory??
+    // Answer: Because in S-mode, we are identical mapped.
+    // Thus, we can copy process's data from vpn to their corresponding ppn at first
     assert_eq!(self.map_type, MapType::Framed);
     let mut start: usize = 0;
     let mut current_vpn = self.vpn_range.get_start();

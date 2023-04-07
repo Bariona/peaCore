@@ -10,6 +10,8 @@ pub const MMIO: &[(usize, usize)] = &[
 // TODO: RISCV64 what's hifive_test?
 pub const QEMU_EXIT_HANDLE: RISCV64 = RISCV64::new(VIRT_TEST);
 
+// use riscv::register::stvec;
+
 //ref:: https://github.com/andre-richter/qemu-exit
 use core::arch::asm;
 
@@ -50,6 +52,7 @@ impl RISCV64 {
 
 impl QEMUExit for RISCV64 {
     /// Exit qemu with specified exit code.
+    #[no_mangle]
     fn exit(&self, code: u32) -> ! {
         // If code is not a special value, we need to encode it with EXIT_FAILURE_FLAG.
         let code_new = match code {
@@ -57,6 +60,7 @@ impl QEMUExit for RISCV64 {
             _ => exit_code_encode(code),
         };
 
+        // println!("stvec: {:#x}", stvec::read().address());
         unsafe {
             asm!(
                 "sw {0}, 0({1})",

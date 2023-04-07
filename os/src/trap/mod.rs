@@ -55,6 +55,7 @@ pub fn trap_handler() -> ! {
     Trap::Exception(Exception::UserEnvCall) => {
       // println!("[kernel] handling process {}'s trap", current_taskID());
       cx.sepc += 4;
+      // syscall: includes sys_exit, sys_yild, sys_write, sys_sbrk
       cx.x[10] = syscall(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]) as usize;
     }
     Trap::Exception(Exception::StoreFault)
@@ -91,8 +92,8 @@ pub fn trap_return() -> ! {
   let trap_cx_ptr = TRAP_CONTEXT;
   let user_satp = current_user_token();
   extern "C" {
-      fn __alltraps();
-      fn __restore();
+    fn __alltraps();
+    fn __restore();
   }
   let restore_va = __restore as usize - __alltraps as usize + TRAMPOLINE;
   unsafe {

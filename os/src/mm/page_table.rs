@@ -2,7 +2,6 @@ use alloc::vec::Vec;
 use bitflags::bitflags;
 
 use alloc::vec;
-use riscv::addr::{Address};
 
 use super::{address::{PhysPageNum, VirtPageNum, VirtAddr, StepByOne}, frame_allocator::{FrameTracker, frame_alloc}};
 
