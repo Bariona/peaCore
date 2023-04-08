@@ -20,6 +20,7 @@ extern crate lazy_static;
 mod board;
 
 mod config;
+mod ds;
 mod sync;
 mod sbi;
 mod timer;
@@ -50,6 +51,7 @@ pub fn rust_main() -> ! {
 	// print_something();
 	clear_bss();
 	println!("[kernel] Hello, OS World!");
+	ds::test();
 	mm::init();
 	mm::heap_test();
 	mm::remap_test();
