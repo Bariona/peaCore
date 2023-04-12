@@ -29,6 +29,7 @@ impl TaskControlBlock {
   }
 
   pub fn new(elf_data: &[u8], app_id: usize) -> Self {
+    // println!("id = {}", app_id);
     let (memory_set, user_sp, entry_point) = MemorySet::from_elf(elf_data);
     // note that `memory_set` is for the user address space
     // but, ... we are currently in the S-mode

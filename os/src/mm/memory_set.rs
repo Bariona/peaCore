@@ -175,6 +175,7 @@ impl MemorySet {
         if ph_flags.is_execute() {
           map_perm |= MapPermission::X;
         } 
+        // println!("{:?} {:?}", start_va, end_va);
         let map_area = MapArea::new(start_va, end_va, MapType::Framed, map_perm);
         max_end_vpn = map_area.vpn_range.get_end();
         memory_set.push(
@@ -309,10 +310,12 @@ impl MapArea {
     let pte_flags = PTEFlags::from_bits(self.map_perm.bits).unwrap();
     page_table.map(vpn, ppn, pte_flags);
   }
-  pub fn map(&mut self, page_table: &mut PageTable) {
+  pub fn map(&mut self, page_table: &mut PageTable) { 
+    // println!("begin: {:?} {:?}", self.vpn_range.get_start(), self.vpn_range.get_end());
     for vpn in self.vpn_range {
       self.map_one(page_table, vpn);
     }
+    // println!("end: ");
   }
 
   pub fn unmap_one(&mut self, page_table: &mut PageTable, vpn: VirtPageNum) {
