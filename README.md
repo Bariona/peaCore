@@ -24,7 +24,7 @@ sudo apt-get install gdb-multiarch
 ### To Do list
 
 - [ ] remove ecall (rustsbi)
-    
+  
     1. early-output[UART0: 0x1000_0000] 
 
     2. shutdown (sys_exit)
@@ -35,11 +35,17 @@ sudo apt-get install gdb-multiarch
 
 
 
-- [ ] Self-made Buddy for heap allocation
+- [x] Self-made Buddy for heap allocation
 
   Ref: [rust-sbi CHANGELOG](https://github.com/rustsbi/rustsbi/blob/91cfa36d14b81af3874ba1da2c0663b5bd601fa3/CHANGELOG.md?plain=1#L122), rust-sbi-tutorial
 
 - [ ] Slab
+
+- [ ] Timer interrupt: remove from rust-sbi
+
+- [ ] Random location memory
+
+- [ ] Process scheduler
 
 
 ### Reference

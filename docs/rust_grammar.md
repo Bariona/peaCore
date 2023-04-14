@@ -1,6 +1,12 @@
 
 > rust grammar used in peaCore.
 
+- The default executable file is src/main.rs.
+
+    Other executables can be placed in src/bin/.
+    
+    see [rust package layout](https://doc.rust-lang.org/cargo/guide/project-layout.html)
+
 - #[repr(transparent)]: 保证内存分布和其单一成员相同
   类似的还有#[repr(C)], #[repr(u8)]
 
@@ -17,6 +23,7 @@
     ```
 - [build scripts: build.rs](https://course.rs/cargo/reference/build-script/intro.html)
 
+- #[feature(linkage)]: 规定了链接方式 (e.g. link=weak)
 
 - RefCell: 
 

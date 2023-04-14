@@ -25,6 +25,10 @@
     usually it tells the computer how to find the kernel code.
 
 
+- Surpass your physical memory's constraint: 
+
+    replacement policy [link](https://rcore-os.cn/rCore-Tutorial-Book-v3/chapter4/7more-as.html)
+
 
 ### RISCV
 
@@ -43,10 +47,22 @@ encountered the exception.
 - sscratch: is used to hold a pointer to the hart-local supervisor context while the hart is
 executing user code. 
 
+    During the U-mode, sscratch points to TrapContext in peaCore.
 > hart: hardware thread
 
 - satp: This register holds the **physical** page number (PPN) of the root page table, i.e., its supervisor physical address
 divided by 4 KiB.
+
+> Form Rcore:
+> 
+> 而当 CPU 完成 Trap 处理准备返回的时候，需要通过一条 S 特权级的特权指令 sret 来完成，这一条指令具体完成以下功能：
+>   
+>   - CPU 会将当前的特权级按照 sstatus 的 SPP 字段设置为 U 或者 S ；
+>
+>   - CPU 会跳转到 sepc 寄存器指向的那条指令，然后继续执行。
+
+When visited unallocated page: page fault.
+
 
 ### Makefile
 

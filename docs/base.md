@@ -13,7 +13,17 @@ If it doesn't support riscv64, try `riscv64-unknown-elf-gdb`.
     $ target remote localhost:1234  # in gdb
     ```
 
+- ctrl+A C: QEMU monitor 
+
+    ```
+    info mem
+    info registers
+    ```
+
+    ​
+
 ### GDB
+
 - b: create breakpoint
 
 - bt: display the call stack(backtrace) of the program
