@@ -34,6 +34,7 @@ pub fn heap_test() {
   }
   let bss_range = sbss as usize..ebss as usize;
   let a = Box::new(5);
+  
   assert_eq!(*a, 5);
   assert!(bss_range.contains(&(a.as_ref() as *const _ as usize)));
   drop(a);

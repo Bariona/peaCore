@@ -1,3 +1,5 @@
+use crate::mm::address::VirtAddr;
+
 use self::{heap_allocator::init_heap, frame_allocator::init_frame_allocator, memory_set::KERNEL_SPACE};
 
 pub mod address;
@@ -11,7 +13,10 @@ mod page_table;
 
 pub fn init() {
   init_heap();
+  heap_test();
   init_frame_allocator();
+  assert!(KERNEL_SPACE.exclusive_access().check_valid(VirtAddr::from(0x1000_0000)));
   KERNEL_SPACE.exclusive_access().activate();
+  
   // remap_test();
 }

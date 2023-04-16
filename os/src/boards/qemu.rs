@@ -1,10 +1,15 @@
 //! Constants used in the peaCore for qemu
 const VIRT_TEST: u64 = 0x100000;
 
+pub const QEMU_BASE_ADDRESS: usize = 0x8000_0000;
+pub const KERNEL_MAX_ALLOCED_ADDRESS: usize = MEMORY_ENDPOINT;
+pub const UART_BASE_ADDRESS: usize = 0x1000_0000;
+
 pub const CLOCK_FREQ: usize = 12500000;
 
 pub const MMIO: &[(usize, usize)] = &[
     (0x0010_0000, 0x00_2000), // VIRT_TEST/RTC  in virt machine
+    (UART_BASE_ADDRESS, 0x00_1000)
 ];
 
 // TODO: RISCV64 what's hifive_test?
@@ -14,6 +19,8 @@ pub const QEMU_EXIT_HANDLE: RISCV64 = RISCV64::new(VIRT_TEST);
 
 //ref:: https://github.com/andre-richter/qemu-exit
 use core::arch::asm;
+
+use crate::config::MEMORY_ENDPOINT;
 
 const EXIT_SUCCESS: u32 = 0x5555; // Equals `exit(0)`. qemu successful exit
 

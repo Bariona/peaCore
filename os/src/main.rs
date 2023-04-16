@@ -2,6 +2,7 @@
 #![no_main]
 #![feature(panic_info_message)]
 #![feature(alloc_error_handler)]
+#![feature(fn_align)]
 
 /*
 #![feature(custom_test_frameworks)]
@@ -21,18 +22,20 @@ mod board;
 
 mod config;
 mod ds;
+mod start;
 mod sync;
 mod sbi;
-mod timer;
 mod syscall;
-mod lang_items; // panic_handler
-mod vga_buffer;
-mod mm;
+mod timer;
 mod task;
 mod trap;
 mod loader;
+mod lang_items; // panic_handler
+mod vga_buffer;
+mod mm;
+mod uart;
 
-use core::arch::global_asm;
+use core::{arch::global_asm};
 
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));
@@ -48,27 +51,13 @@ fn test_runner(tests: &[&dyn Fn()]) {
 
 #[no_mangle]
 pub fn rust_main() -> ! {
-	// print_something();
-	clear_bss();
 	println!("[kernel] Hello, OS World!");
 	ds::test();
 	mm::init();
-	mm::heap_test();
 	mm::remap_test();
 	trap::init();
-	trap::enable_timer_interrupt();
-	timer::set_next_trigger();
+	// trap::enable_timer_interrupt();
+	// timer::set_next_trigger();
 	task::run_first_task();
 	panic!("Unreachable in kernel");
-}
-
-fn clear_bss() {
-	extern "C" {
-		fn sbss();
-		fn ebss();
-	}
-	unsafe {
-		core::slice::from_raw_parts_mut(sbss as usize as *mut u8, ebss as usize - sbss as usize)
-			.fill(0);
-	}
 }

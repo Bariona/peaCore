@@ -44,6 +44,26 @@ encountered the exception.
 
 - scause: When a trap is taken into S-mode, scause is written with a code indicating the event that caused the trap.
 
+---
+
+Machine Mode Interruption:
+
+- `mstatus`: Interrupt-enable bits, MIE, SIE, and UIE, are provided for each privilege mode.
+
+    When a hart is executing in privilege mode $x$, interrupts are enabled when $x$IE=1. Interrupts for lower privilege modes are **always disabled**, whereas interrupts for higher privilege modes are **always enabled**.
+
+  `mie`, `mip`:  Only the bits corresponding to lower-privilege software interrupts (USIP, SSIP), timer interrupts (UTIP, STIP), and external interrupts (UEIP, SEIP),  in `mip` are writable through this CSR address; the remaining bits are read-only.
+
+  similar to `mie`, which stands for enable bit.
+
+    `mcause`: similar to `scause`.
+
+**By default, all traps at any privilege level are handled in machine mode,**
+
+Solution: `medeleg`, `mideleg` (exception, interruption delegation)
+
+---
+
 - sscratch: is used to hold a pointer to the hart-local supervisor context while the hart is
 executing user code. 
 
@@ -63,6 +83,7 @@ divided by 4 KiB.
 
 When visited unallocated page: page fault.
 
+- Physical Memory Protection: [zhihu-link](https://zhuanlan.zhihu.com/p/139695407)
 
 ### Makefile
 

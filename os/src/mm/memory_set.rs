@@ -77,7 +77,7 @@ impl MemorySet {
     let mut memory_set: MemorySet = Self::new_bare();
     memory_set.map_trampoline();
 
-    println!("mapping {:>8} section [{:#x}, {:#x})", ".text", stext as usize, etext as usize);
+    println!("mapping {:>9} r-x section [{:#x}, {:#x})", ".text", stext as usize, etext as usize);
     memory_set.push(
       MapArea::new(
         (stext as usize).into(), 
@@ -88,7 +88,7 @@ impl MemorySet {
      None
     );
 
-    println!("mapping {:>8} section [{:#x}, {:#x})", ".rodata", srodata as usize, erodata as usize);
+    println!("mapping {:>9} r-- section [{:#x}, {:#x})", ".rodata", srodata as usize, erodata as usize);
     memory_set.push(
       MapArea::new(
         (srodata as usize).into(),
@@ -99,7 +99,7 @@ impl MemorySet {
       None,
     );
 
-    println!("mapping {:>8} section [{:#x}, {:#x})", ".data", sdata as usize, edata as usize);
+    println!("mapping {:>9} rw- section [{:#x}, {:#x})", ".data", sdata as usize, edata as usize);
     memory_set.push(
       MapArea::new(
         (sdata as usize).into(),
@@ -110,7 +110,7 @@ impl MemorySet {
       None,
     );
 
-    println!("mapping {:>8} section [{:#x}, {:#x})", ".data", sbss_with_stack as usize, ebss as usize);
+    println!("mapping {:>9} rw- section [{:#x}, {:#x})", ".data", sbss_with_stack as usize, ebss as usize);
     memory_set.push(
       MapArea::new(
         (sbss_with_stack as usize).into(),
@@ -121,7 +121,7 @@ impl MemorySet {
       None,
     );
 
-    println!("mapping physical memory: [{:#x}, {:#x})", ekernel as usize, MEMORY_ENDPOINT);
+    println!("mapping PhyMemory rw- [{:#x}, {:#x})", ekernel as usize, MEMORY_ENDPOINT);
     // same as frame_allocator
     memory_set.push(
       MapArea::new(
@@ -132,17 +132,20 @@ impl MemorySet {
       ),
       None,
     );
-    for pair in MMIO {
+
+    for &pair in MMIO {
       memory_set.push(
         MapArea::new(
-          (*pair).0.into(),
-          ((*pair).0 + (*pair).1).into(),
+          pair.0.into(),
+          (pair.0 + pair.1).into(),
           MapType::Identical,
           MapPermission::R | MapPermission::W,
         ),
         None,
       );
-  }
+      println!("mapping MMIO rw- [{:#x}, {:#x})", pair.0, pair.0 + pair.1);
+    }
+    println!("kernel memory space mapping done.");
     memory_set
   }
 
@@ -199,7 +202,16 @@ impl MemorySet {
       None
     );
 
-    // TODO: sbrk
+    memory_set.push(
+      MapArea::new(
+        user_stack_top.into(),
+        user_stack_top.into(),
+        MapType::Framed,
+        MapPermission::R | MapPermission::W | MapPermission::U,
+      ),
+      None,
+    );
+
     memory_set.push(
       MapArea::new(
         TRAP_CONTEXT.into(), 
@@ -219,6 +231,11 @@ impl MemorySet {
       satp::write(satp);
       asm!("sfence.vma");
     }
+  }
+
+  #[allow(unused)]
+  pub fn check_valid(&self, va: VirtAddr) -> bool {
+    self.page_table.check_valid(va.floor())
   }
 
   /// translate a virtual page number
@@ -327,6 +344,7 @@ impl MapArea {
     }
     page_table.unmap(vpn);
   }
+  #[allow(unused)]
   pub fn unmap(&mut self, page_table: &mut PageTable) {
     for vpn in self.vpn_range {
       self.unmap_one(page_table, vpn);

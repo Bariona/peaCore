@@ -12,31 +12,36 @@ const SBI_SHUTDOWN: usize = 8;
 
 use core::arch::asm;
 
+use crate::uart::{Console, ConsoleTrait};
+
 /// use sbi call to set timer
 pub fn set_timer(timer: usize) {
-	sbi_call(SBI_SET_TIMER, timer, 0, 0);
+	// sbi_call(SBI_SET_TIMER, timer, 0, 0);
 }
 
 pub fn console_putchar(c: usize) {
-	sbi_call(SBI_CONSOLE_PUTCHAR, c, 0, 0);
+	// sbi_call(SBI_CONSOLE_PUTCHAR, c, 0, 0);
+	Console.put_char(c as u8);
 }
 
 pub fn shutdown() -> ! {
-  sbi_call(SBI_SHUTDOWN, 0, 0, 0);
-  panic!("It should shutdown, but it didn't!");
+  // sbi_call(SBI_SHUTDOWN, 0, 0, 0);
+  // panic!("It should shutdown, but it didn't!");
+	use crate::board::QEMUExit;
+	crate::board::QEMU_EXIT_HANDLE.exit_success();
 }
 
-#[inline(always)]
-fn sbi_call(which: usize, arg0: usize, arg1: usize, arg2: usize) -> usize {
-	let mut ret;
-	unsafe {
-		asm!(
-			"ecall",
-			inlateout("x10") arg0 => ret,
-			in("x11") arg1,
-			in("x12") arg2,
-			in("x17") which,
-		);
-	}
-	ret
-}
+// #[inline(always)]
+// fn sbi_call(which: usize, arg0: usize, arg1: usize, arg2: usize) -> usize {
+// 	let mut ret;
+// 	unsafe {
+// 		asm!(
+// 			"ecall",
+// 			inlateout("x10") arg0 => ret,
+// 			in("x11") arg1,
+// 			in("x12") arg2,
+// 			in("x17") which,
+// 		);
+// 	}
+// 	ret
+// }

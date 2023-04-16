@@ -76,7 +76,8 @@ impl TaskManager {
       .find(|id| inner.tasks[*id].task_status == TaskStatus::Ready)
   }
 
-  fn get_current_taskID(&self) -> usize {
+  #[allow(unused)]
+  fn get_current_task_id(&self) -> usize {
     let inner = self.inner.exclusive_access();
     inner.current_task
   }
@@ -111,11 +112,6 @@ impl TaskManager {
     } else {
       println!("All applications completed!");
       use crate::board::QEMUExit;
-      // use riscv::register::{sstatus, stvec};
-      // println!("stvec: {:#x}", stvec::read().address());
-      // if (sstatus::read().spp() == sstatus::SPP::Supervisor) {
-      //   println!("S-mode");
-      // }
       crate::board::QEMU_EXIT_HANDLE.exit_success();
     }
   }
@@ -156,8 +152,8 @@ pub fn exit_current_and_run_next() {
 
 /// Get the current task's id
 #[allow(unused)]
-pub fn current_taskID() -> usize {
-  TASK_MANAGER.get_current_taskID()
+pub fn current_task_id() -> usize {
+  TASK_MANAGER.get_current_task_id()
 }
 
 /// Get the current 'Running' task's token.

@@ -23,7 +23,7 @@ sudo apt-get install gdb-multiarch
 
 ### To Do list
 
-- [ ] remove ecall (rustsbi)
+- [x] remove ecall (rustsbi)
   
     1. early-output[UART0: 0x1000_0000] 
 
@@ -41,7 +41,7 @@ sudo apt-get install gdb-multiarch
 
 - [ ] Slab
 
-- [ ] Timer interrupt: remove from rust-sbi
+- [x] Timer interrupt: remove from rust-sbi
 
 - [ ] Random location memory
 

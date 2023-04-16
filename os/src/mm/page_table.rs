@@ -138,6 +138,11 @@ impl PageTable {
     *pte = PageTableEntry::new(ppn, flags | PTEFlags::V);
   }
 
+  #[allow(unused)]
+  pub fn check_valid(&self, vpn: VirtPageNum) -> bool {
+    let pte = self.find_pte(vpn).unwrap();
+    pte.is_valid()
+  }
   /// set a virtual page as invalid
   pub fn unmap(&mut self, vpn: VirtPageNum) {
     let pte = self.find_pte(vpn).unwrap();

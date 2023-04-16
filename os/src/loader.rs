@@ -5,7 +5,6 @@ pub fn get_num_app() -> usize {
   extern "C" {
     fn _num_app();
   }
-  // TODO: _num_app as usize ?
   unsafe { (_num_app as *const usize).read_volatile() }
 }
 

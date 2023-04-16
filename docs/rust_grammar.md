@@ -76,3 +76,5 @@
 - `&` versus `ref`
 
     [rust forum](https://users.rust-lang.org/t/ref-keyword-versus/18818/3)
+
+- #[repr(align(4))]: function align (inorder to be written into mtvec/stvec)

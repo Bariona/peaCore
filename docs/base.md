@@ -19,7 +19,7 @@ If it doesn't support riscv64, try `riscv64-unknown-elf-gdb`.
     info mem
     info registers
     ```
-
+- -device loader,file=./path/to/file,addr=./addr/to/place : before starting QEMU, load file from host machine to QEMU and place it at the target address.
     ​
 
 ### GDB
@@ -44,6 +44,6 @@ If it doesn't support riscv64, try `riscv64-unknown-elf-gdb`.
 
 - p/x $pc: show register's value
 
-- wa: add watch point on var/mem
+- wa: add watch point on var/mem/register
 
 - undisplay 3: del 3rd breakpint

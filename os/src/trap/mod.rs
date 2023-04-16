@@ -1,10 +1,9 @@
 use core::arch::global_asm;
 use core::arch::asm;
 
-use riscv::register::{utvec::TrapMode, stvec, sie, scause, stval, scause::{Trap, Exception, Interrupt}};
+use riscv::register::{utvec::TrapMode, stvec, scause, stval, scause::{Trap, Exception, Interrupt}};
 
 use crate::syscall::syscall;
-use crate::task::current_taskID;
 use crate::{config::{TRAMPOLINE, KERNEL_STACK_SIZE, PAGE_SIZE, TRAP_CONTEXT}, task::{current_trap_cx, exit_current_and_run_next, suspend_current_and_run_next, current_user_token}};
 
 pub mod context;
@@ -31,12 +30,6 @@ fn set_kernel_trap_entry() {
 fn set_user_trap_entry() {
   unsafe {
     stvec::write(TRAMPOLINE, TrapMode::Direct);
-  }
-}
-
-pub fn enable_timer_interrupt() {
-  unsafe {
-    sie::set_stimer();
   }
 }
 
@@ -70,7 +63,11 @@ pub fn trap_handler() -> ! {
       exit_current_and_run_next();
     }
     Trap::Interrupt(Interrupt::SupervisorTimer) => {
-      crate::timer::set_next_trigger();
+      panic!("timer interrupt is not implemented this way!");
+    }
+    Trap::Interrupt(Interrupt::SupervisorSoft) => {
+      use csr_riscv::register::sip;
+      unsafe { asm!("csrw sip,    {}", in(reg)sip::read().bits() & !2); } // clear SSIP: soft interruption pending bit
       suspend_current_and_run_next();
     }
     _ => {
@@ -91,6 +88,7 @@ pub fn trap_return() -> ! {
   set_user_trap_entry();
   let trap_cx_ptr = TRAP_CONTEXT;
   let user_satp = current_user_token();
+  // println!("{:?}", sstatus::read().spie());
   extern "C" {
     fn __alltraps();
     fn __restore();
