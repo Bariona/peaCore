@@ -1,6 +1,6 @@
 //! File and filesystem-related syscalls
 
-use crate::{mm::translated_byte_buffer, task::{current_user_token, processor::current_user_token}, sbi::console_putchar};
+use crate::{mm::translated_byte_buffer, task::processor::current_user_token, sbi::console_getchar};
 
 const FD_STDIN: usize = 0;
 const FD_STDOUT: usize = 1;

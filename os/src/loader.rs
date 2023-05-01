@@ -9,15 +9,15 @@ lazy_static! {
       fn _app_names();
     }
     let mut start = _app_names as usize as *const u8;
-    let v = Vec::new();
+    let mut v = Vec::new();
     unsafe {
       for _ in 0..num_app {
         let mut end = start;
         while end.read_volatile() != b'\0' {
           end = end.add(1);
         }
-        let slice = core::slice::from_raw_parts(start, end - start);
-        let str = core::str::from_utf8(slice);
+        let slice = core::slice::from_raw_parts(start, end as usize - start as usize);
+        let str = core::str::from_utf8(slice).unwrap();
         v.push(str);
         start = end.add(1);
       }

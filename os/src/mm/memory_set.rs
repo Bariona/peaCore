@@ -6,7 +6,6 @@ use bitflags::bitflags;
 use alloc::vec::Vec;
 use riscv::register::satp;
 use crate::board::MMIO;
-use crate::start;
 use crate::{config::{PAGE_SIZE, TRAMPOLINE, MEMORY_ENDPOINT, USER_STACK_SIZE, TRAP_CONTEXT}, mm::address::StepByOne, sync::up::UPSafeCell};
 
 use super::{page_table::{PageTable, PTEFlags, PageTableEntry}, address::{VPNRange, VirtPageNum, VirtAddr, PhysPageNum, PhysAddr}, frame_allocator::{FrameTracker, frame_alloc}};

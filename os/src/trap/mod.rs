@@ -4,7 +4,9 @@ use core::arch::asm;
 use riscv::register::{utvec::TrapMode, stvec, scause, stval, scause::{Trap, Exception, Interrupt}};
 
 use crate::syscall::syscall;
-use crate::{config::{TRAMPOLINE, KERNEL_STACK_SIZE, PAGE_SIZE, TRAP_CONTEXT}, task::{current_trap_cx, exit_current_and_run_next, suspend_current_and_run_next, current_user_token}};
+use crate::task::processor::current_trap_cx;
+use crate::task::processor::current_user_token;
+use crate::{config::{TRAMPOLINE, KERNEL_STACK_SIZE, PAGE_SIZE, TRAP_CONTEXT}, task::{exit_current_and_run_next, suspend_current_and_run_next}};
 
 pub mod context;
 

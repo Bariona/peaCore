@@ -18,11 +18,11 @@ pub fn sys_get_time() -> isize {
   get_time_ms() as isize
 }
 
-/// change `data` segmemnt size
-pub fn sys_sbrk(size: i32) -> isize {
-  if let Some(old_brk) = change_program_brk(size) {
-    old_brk as isize
-  } else {
-    -1
-  }
-}
+// /// change `data` segmemnt size
+// pub fn sys_sbrk(size: i32) -> isize {
+//   if let Some(old_brk) = change_program_brk(size) {
+//     old_brk as isize
+//   } else {
+//     -1
+//   }
+// }

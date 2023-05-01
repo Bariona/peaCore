@@ -1,8 +1,8 @@
-use core::{cell::RefMut, mem};
+use core::{cell::RefMut};
 
-use alloc::{rc::Weak, vec::Vec, sync::Arc};
+use alloc::{vec::Vec, sync::{Arc, Weak}};
 
-use crate::{mm::{memory_set::{MemorySet, KERNEL_SPACE, MapPermission, self}, address::{PhysPageNum, VirtAddr}}, config::TRAP_CONTEXT, trap::{kernel_stack_position, context::TrapContext, trap_handler}, sync::up::UPSafeCell};
+use crate::{mm::{memory_set::{MemorySet, KERNEL_SPACE}, address::{VirtAddr, PhysPageNum}}, config::TRAP_CONTEXT, trap::{context::TrapContext, trap_handler}, sync::up::UPSafeCell};
 
 use super::{context::TaskContext, pid::{PidHandler, KernelStack, pid_alloc}};
 
@@ -61,7 +61,7 @@ impl TaskControlBlock {
       .unwrap()
       .ppn();
     let pid_handler = pid_alloc();
-    let kernel_stack = KernelStack::new(pid_handler); // allocate process's kernel stack
+    let kernel_stack = KernelStack::new(&pid_handler); // allocate process's kernel stack
     let kernel_stack_top = kernel_stack.get_top();
 
     let task_control_block = TaskControlBlock {
@@ -79,7 +79,7 @@ impl TaskControlBlock {
             exit_code: 0,
         })},
     };
-    let trap_cx = task_control_block.get_trap_cx();
+    let trap_cx = task_control_block.inner_exclusive_access().get_trap_cx();
     *trap_cx = TrapContext::app_init_context(
       entry_point, 
       user_sp, 
@@ -112,7 +112,7 @@ impl TaskControlBlock {
       user_sp, 
       KERNEL_SPACE.exclusive_access().token(),
       self.kernel_stack.get_top(), 
-      trap_handler
+      trap_handler as usize
     );
     // === release inner automaticallly ===
   }
@@ -127,7 +127,7 @@ impl TaskControlBlock {
       .ppn();
   
     let pid_handler = pid_alloc();
-    let kernel_stack = KernelStack::new(pid_handler);
+    let kernel_stack = KernelStack::new(&pid_handler);
     let kernel_stack_top = kernel_stack.get_top();
 
     let task_control_block = Arc::new(TaskControlBlock {

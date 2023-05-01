@@ -1,14 +1,15 @@
-use alloc::{vec::Vec, sync::Arc};
+use alloc::{sync::Arc};
 
-use crate::{sync::up::UPSafeCell, loader::{get_num_app, get_app_data, get_app_data_by_name}, trap::context::TrapContext, board::QEMUExit};
+use crate::{loader::get_app_data_by_name, board::QEMUExit};
 
-use self::{task::{TaskControlBlock, TaskStatus}, context::TaskContext, switch::__switch, processor::{take_current_task, schedule}, task_manager::add_task};
+use self::{task::{TaskControlBlock, TaskStatus}, context::TaskContext, processor::{take_current_task, schedule}, task_manager::add_task};
 
 mod context;
 mod task_manager;
 mod pid;
 pub mod processor;
 mod switch;
+#[allow(clippy::module_inception)]
 mod task;
 
 
@@ -58,9 +59,9 @@ pub fn exit_current_and_run_next(exit_code: i32) {
   task_inner.task_status = TaskStatus::Zombie;
   task_inner.exit_code = exit_code;
 
-  { /// link zombie proc's childer to `initproc`
+  { // link zombie proc's childer to `initproc`
     let mut initproc_inner = INITPROC.inner_exclusive_access();
-    for child in task_inner.children {
+    for child in task_inner.children.iter() {
       child.inner_exclusive_access().parent = Some(Arc::downgrade(&INITPROC));
       initproc_inner.children.push(child.clone());
     }
@@ -72,11 +73,11 @@ pub fn exit_current_and_run_next(exit_code: i32) {
   drop(task);
 
   let mut _unused = TaskContext::zero_init();
-  schedule(_unused);
+  schedule(&mut _unused as *mut TaskContext);
 }
 
 pub fn add_initproc() {
-  add_task(INITPROC);
+  add_task(INITPROC.clone());
 }
 /*
 pub struct TaskManager {

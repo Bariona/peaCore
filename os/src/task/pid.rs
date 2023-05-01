@@ -66,7 +66,7 @@ pub struct KernelStack {
 
 impl KernelStack {
   /// Alloc Kernel Stack of the corresponding `pid` (modify PageTable)
-  pub fn new(pid_handler: PidHandler) -> Self {
+  pub fn new(pid_handler: &PidHandler) -> Self {
     let pid = pid_handler.0;
     let (kernel_stack_bottom, kernel_stack_top) = kernel_stack_position(pid);
     KERNEL_SPACE.exclusive_access().insert_framed_area(
