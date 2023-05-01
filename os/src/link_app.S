@@ -14,6 +14,17 @@ _num_app:
     .quad app_7_start
     .quad app_7_end
 
+    .global _app_names
+_app_names:
+    .string "00hello_world"
+    .string "01store_fault"
+    .string "02power"
+    .string "03priv_inst"
+    .string "04load_fault"
+    .string "04priv_csr"
+    .string "05sleep"
+    .string "sbrk_test"
+
     .section .data
     .global app_0_start
     .global app_0_end

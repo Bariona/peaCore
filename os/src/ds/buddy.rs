@@ -33,7 +33,7 @@ impl<const ORDER: usize> Heap<ORDER> {
 
   /// add available memeory [start, end) to heap
   pub unsafe fn add_to_heap(&mut self, mut start: usize, mut end: usize) {
-    // bravo implementation!
+    // bravo implementation of alignment!
     start = (start + size_of::<usize>() - 1) & (!size_of::<usize>() + 1);
     end = end & (!size_of::<usize>() + 1);
     assert!(start <= end);

@@ -9,6 +9,9 @@ pub trait ConsoleTrait: Sync {
 
   /// put a string to the console
   fn put_str(&self, s: &str);
+
+  /// get a char
+  fn get_char(&self) -> usize;
 }
 
 pub (crate) struct Console;
@@ -34,5 +37,12 @@ impl ConsoleTrait for Console {
     for c in s.bytes() {
       uart.send(c);
     }
+  }
+
+  #[inline]
+  fn get_char(&self) -> usize {
+    let mut uart = UART.lock();
+    let uart = unsafe { uart.assume_init_mut() };
+    uart.receive() as usize
   }
 }

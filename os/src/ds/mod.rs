@@ -39,7 +39,6 @@ fn test_linked_list() {
 }
 
 fn test_empty_heap() {
-  let a: Heap<32> = Heap::empty();
   let mut heap = Heap::<32>::new();
   assert!(heap.alloc(Layout::from_size_align(1, 1).unwrap()).is_err());
 }

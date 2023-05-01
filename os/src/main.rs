@@ -56,8 +56,11 @@ pub fn rust_main() -> ! {
 	mm::init();
 	mm::remap_test();
 	trap::init();
+
+	task::add_initproc();
+	loader::list_apps();
 	// trap::enable_timer_interrupt();
 	// timer::set_next_trigger();
-	task::run_first_task();
+	task::processor::run_tasks();
 	panic!("Unreachable in kernel");
 }

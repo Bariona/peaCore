@@ -49,6 +49,7 @@ impl LinkedList {
   }
 }
 
+#[allow(dead_code)]
 pub struct Iter<'a> {
   curr: *mut usize,
   list: &'a LinkedList
@@ -88,6 +89,7 @@ impl ListNode {
   }
 }
 
+#[allow(dead_code)]
 pub struct IterMut<'a> {
   list: &'a mut LinkedList,
   prev: *mut usize, 

@@ -43,6 +43,8 @@ sudo apt-get install gdb-multiarch
 
 - [x] Timer interrupt: remove from rust-sbi
 
+- [ ] Trap SIP clear when trap_return
+
 - [ ] Random location memory
 
 - [ ] Process scheduler
@@ -51,6 +53,8 @@ sudo apt-get install gdb-multiarch
 ### Reference
 
 - [rCore-Tutorial](https://rcore-os.cn/rCore-Tutorial-Book-v3/index.html)
+
+- [xv6](https://github.com/mit-pdos/xv6-riscv)
 
 - [Blog OS](https://os.phil-opp.com/)
 

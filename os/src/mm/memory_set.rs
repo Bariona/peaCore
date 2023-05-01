@@ -6,6 +6,7 @@ use bitflags::bitflags;
 use alloc::vec::Vec;
 use riscv::register::satp;
 use crate::board::MMIO;
+use crate::start;
 use crate::{config::{PAGE_SIZE, TRAMPOLINE, MEMORY_ENDPOINT, USER_STACK_SIZE, TRAP_CONTEXT}, mm::address::StepByOne, sync::up::UPSafeCell};
 
 use super::{page_table::{PageTable, PTEFlags, PageTableEntry}, address::{VPNRange, VirtPageNum, VirtAddr, PhysPageNum, PhysAddr}, frame_allocator::{FrameTracker, frame_alloc}};
@@ -45,6 +46,7 @@ impl MemorySet {
   pub fn token(&self) -> usize {
     self.page_table.token()
   }
+
   /// Push map_area into a MemorySet 
   /// If data != None, also write data into map_area
   pub fn push(&mut self, mut map_area: MapArea, data: Option<&[u8]>) {
@@ -55,6 +57,7 @@ impl MemorySet {
     self.areas.push(map_area);
   }
 
+  /// Assume that no conflicts, insert framed area
   pub fn insert_framed_area(
     &mut self, 
     start_va: VirtAddr,
@@ -62,6 +65,18 @@ impl MemorySet {
     perm: MapPermission,
   ) {
     self.push(MapArea::new(start_va, end_va, MapType::Framed, perm), None);
+  }
+
+  /// ReMove `MapArea` that starts with `start_vpn`
+  pub fn remove_area_with_start_vpn(&mut self, start_vpn: VirtPageNum) {
+    if let Some((idx, area)) = self
+      .areas
+      .iter_mut()
+      .enumerate()
+      .find(|(_, area)| area.vpn_range.get_start() == start_vpn) {
+        area.unmap(&mut self.page_table);
+        self.areas.remove(idx);
+      }
   }
 
   /// trampoline's virtual address (256GB - 4k, 256GB]
@@ -233,6 +248,26 @@ impl MemorySet {
     }
   }
 
+  pub fn from_existed_user(user_space: &Self) -> Self {
+    let mut memory_set = Self::new_bare();
+    memory_set.map_trampoline();
+    for area in user_space.areas.iter() {
+      let new_area = MapArea::from_another(area);
+      memory_set.push(new_area, None);
+      for vpn in area.vpn_range {
+        let src_ppn = user_space.translate(vpn).unwrap().ppn();
+        let dst_ppn = memory_set.translate(vpn).unwrap().ppn();
+        dst_ppn.get_bytes_array().copy_from_slice(src_ppn.get_bytes_array());
+      }
+    }
+    memory_set
+  }
+
+  /// TODO: Remove all `MapArea`
+  pub fn recycle_data_pages(&mut self) {
+    self.areas.clear();
+  }
+
   #[allow(unused)]
   pub fn check_valid(&self, va: VirtAddr) -> bool {
     self.page_table.check_valid(va.floor())
@@ -312,6 +347,16 @@ impl MapArea {
     }
   }
 
+  /// Without copy data_frames
+  pub fn from_another(another: &Self) -> Self {
+    Self {
+      vpn_range: VPNRange::new(another.vpn_range.get_start(), another.vpn_range.get_end()),
+      data_frames: BTreeMap::new(),
+      map_type: another.map_type,
+      map_perm: another.map_perm,
+    }
+  }
+
   pub fn map_one(&mut self, page_table: &mut PageTable, vpn: VirtPageNum) {
     let ppn: PhysPageNum;
     match self.map_type {
@@ -344,7 +389,6 @@ impl MapArea {
     }
     page_table.unmap(vpn);
   }
-  #[allow(unused)]
   pub fn unmap(&mut self, page_table: &mut PageTable) {
     for vpn in self.vpn_range {
       self.unmap_one(page_table, vpn);

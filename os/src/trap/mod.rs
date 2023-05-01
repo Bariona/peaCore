@@ -41,26 +41,28 @@ pub fn trap_from_kernel() -> ! {
 #[no_mangle]
 pub fn trap_handler() -> ! {
   set_kernel_trap_entry(); 
-  let cx = current_trap_cx();
+  let mut cx = current_trap_cx();
   let scause = scause::read();
   let stval = stval::read();
   match scause.cause() {
     Trap::Exception(Exception::UserEnvCall) => {
-      // println!("[kernel] handling process {}'s trap", current_taskID());
+      // println!("[kernel] handling process {}'s trap", current_taskID());    
       cx.sepc += 4;
       // syscall: includes sys_exit, sys_yild, sys_write, sys_sbrk
-      cx.x[10] = syscall(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]) as usize;
+      let result = syscall(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]);
+      cx = current_trap_cx();
+      cx.x[10] = result as usize;
     }
     Trap::Exception(Exception::StoreFault)
       | Trap::Exception(Exception::StorePageFault)
       | Trap::Exception(Exception::LoadFault)
       | Trap::Exception(Exception::LoadPageFault) => {
       println!("[kernel] PageFault in application, bad addr = {:#x}, bad instruction = {:#x}, kernel killed it.", stval, cx.sepc);
-      exit_current_and_run_next();
+      exit_current_and_run_next(-2);
     }
     Trap::Exception(Exception::IllegalInstruction) => {
       println!("[kernel] IllegalInstruction in application, kernel killed it.");
-      exit_current_and_run_next();
+      exit_current_and_run_next(-3);
     }
     Trap::Interrupt(Interrupt::SupervisorTimer) => {
       panic!("timer interrupt is not implemented this way!");
