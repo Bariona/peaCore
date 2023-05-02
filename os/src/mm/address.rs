@@ -127,6 +127,14 @@ impl From<VirtPageNum> for VirtAddr {
 }
 
 impl PhysAddr {
+  pub fn get_mut<T>(&self) -> &'static mut T {
+    unsafe { 
+      (self.0 as *mut T).as_mut().unwrap() 
+    }
+  } 
+}
+
+impl PhysAddr {
   pub fn floor(&self) -> PhysPageNum {
     PhysPageNum(self.0 >> PAGE_SIZE_BITS)
   }

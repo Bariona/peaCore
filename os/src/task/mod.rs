@@ -2,7 +2,7 @@ use alloc::{sync::Arc};
 
 use crate::{loader::get_app_data_by_name, board::QEMUExit};
 
-use self::{task::{TaskControlBlock, TaskStatus}, context::TaskContext, processor::{take_current_task, schedule}, task_manager::add_task};
+use self::{task::{TaskControlBlock, TaskStatus}, context::TaskContext, processor::{take_current_task, schedule}};
 
 mod context;
 mod task_manager;
@@ -12,6 +12,7 @@ mod switch;
 #[allow(clippy::module_inception)]
 mod task;
 
+pub use task_manager::add_task;
 
 pub fn suspend_current_and_run_next() {
   let task = take_current_task().unwrap();

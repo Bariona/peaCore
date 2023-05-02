@@ -1,5 +1,7 @@
 //! Load user applications into memory
 
+use core::num;
+
 use alloc::vec::Vec;
 
 lazy_static! {
@@ -57,6 +59,10 @@ pub fn get_app_data(app_id: usize) -> &'static [u8] {
 
 pub fn get_app_data_by_name(name: &str) -> Option<&'static [u8]> {
   let num_app = get_num_app();
+  // println!("==== name: {} ====", name.len());
+  // for _i in 0..num_app {
+  //   println!("{}", APP_NAMES[_i]);
+  // }
   (0..num_app)
     .find(|&i| APP_NAMES[i] == name)
     .map(get_app_data)

@@ -4,20 +4,14 @@ use core::arch::asm;
 use riscv::register::{utvec::TrapMode, stvec, scause, stval, scause::{Trap, Exception, Interrupt}};
 
 use crate::syscall::syscall;
+use crate::task::processor::current_task;
 use crate::task::processor::current_trap_cx;
 use crate::task::processor::current_user_token;
-use crate::{config::{TRAMPOLINE, KERNEL_STACK_SIZE, PAGE_SIZE, TRAP_CONTEXT}, task::{exit_current_and_run_next, suspend_current_and_run_next}};
+use crate::{config::{TRAP_CONTEXT, TRAMPOLINE}, task::{exit_current_and_run_next, suspend_current_and_run_next}};
 
 pub mod context;
 
 global_asm!(include_str!("trap.S"));
-
-/// Return (bottom, top) of a kernel stack in the kernel space
-pub fn kernel_stack_position(app_id: usize) -> (usize, usize) {
-  let top = TRAMPOLINE - app_id * (KERNEL_STACK_SIZE + PAGE_SIZE); // guard page
-  let bottom = top - KERNEL_STACK_SIZE;
-  (bottom, top)
-}
 
 pub fn init() {
   set_kernel_trap_entry();
@@ -37,6 +31,9 @@ fn set_user_trap_entry() {
 
 #[no_mangle]
 pub fn trap_from_kernel() -> ! {
+  use riscv::register::mcause;
+  let cause = mcause::read();
+  println!("{:?}", cause);
   panic!("kernel's trap to do...")
 }
 
@@ -48,11 +45,12 @@ pub fn trap_handler() -> ! {
   let stval = stval::read();
   match scause.cause() {
     Trap::Exception(Exception::UserEnvCall) => {
-      // println!("[kernel] handling process {}'s trap", current_taskID());    
       cx.sepc += 4;
-      // syscall: includes sys_exit, sys_yild, sys_write, sys_sbrk
-      let result = syscall(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]);
+      let syscall_id = cx.x[17];
+      // println!("handling syscall: {}", syscall_id);
+      let result = syscall(syscall_id, [cx.x[10], cx.x[11], cx.x[12]]);
       cx = current_trap_cx();
+      // println!("syscall: {} result: {}, current pid: {}", syscall_id, result, current_task().unwrap().getpid());
       cx.x[10] = result as usize;
     }
     Trap::Exception(Exception::StoreFault)

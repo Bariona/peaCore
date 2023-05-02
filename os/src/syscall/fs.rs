@@ -29,6 +29,7 @@ pub fn sys_read(fd: usize, buf: *const u8, len: usize) -> isize {
       loop {
         c = console_getchar();
         assert_ne!(c, 0);
+        break;
       }
       let ch = c as u8;
       let mut buffers = translated_byte_buffer(current_user_token(), buf, len);

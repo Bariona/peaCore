@@ -6,7 +6,7 @@ pub mod address;
 pub mod memory_set;
 pub use memory_set::remap_test;
 pub use heap_allocator::heap_test;
-pub use page_table::translated_byte_buffer;
+pub use page_table::{translated_byte_buffer, translated_str, translated_refmut};
 mod heap_allocator;
 mod frame_allocator;
 mod page_table;

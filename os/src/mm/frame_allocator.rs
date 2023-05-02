@@ -53,6 +53,7 @@ impl StackFrameAllocator {
   pub fn init(&mut self, l: PhysPageNum, r: PhysPageNum) {
     self.current = l.0;
     self.end = r.0;
+    println!("last {} Physical Frames.", self.end - self.current);
   }
 }
 
@@ -66,6 +67,7 @@ impl FrameAllocator for StackFrameAllocator {
   }
 
   fn alloc(&mut self) -> Option<PhysPageNum> {
+    // println!("{}", self.current);
     if let Some(ppn) = self.recycled.pop() {
       Some(ppn.into())
     } else if self.current == self.end {

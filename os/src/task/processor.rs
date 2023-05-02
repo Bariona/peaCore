@@ -52,6 +52,7 @@ pub fn run_tasks() {
   loop {
     let mut processor = PROCESSOR.exclusive_access();
     if let Some(task) = fetch_task() {
+      // find a task ready to run
       let idle_task_cx_ptr = processor.get_idle_task_cx();
       let mut task_inner = task.inner_exclusive_access();
       let next_task_cx_ptr = &task_inner.task_cx as *const TaskContext;

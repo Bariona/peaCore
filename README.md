@@ -45,6 +45,8 @@ sudo apt-get install gdb-multiarch
 
 - [ ] Trap SIP clear when trap_return
 
+- [ ] sbrk
+
 - [ ] Random location memory
 
 - [ ] Process scheduler
