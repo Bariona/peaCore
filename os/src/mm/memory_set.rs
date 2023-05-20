@@ -195,6 +195,7 @@ impl MemorySet {
         // println!("{:?} {:?}", start_va, end_va);
         let map_area = MapArea::new(start_va, end_va, MapType::Framed, map_perm);
         max_end_vpn = map_area.vpn_range.get_end();
+        // println!(" elf: begin: {:?}, end: {:?}, {:?}", start_va, end_va, map_perm);
         memory_set.push(
           map_area, 
           Some(&elf.input[ph.offset() as usize .. (ph.offset() + ph.file_size()) as usize])

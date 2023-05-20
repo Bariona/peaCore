@@ -4,7 +4,6 @@ use core::arch::asm;
 use riscv::register::{utvec::TrapMode, stvec, scause, stval, scause::{Trap, Exception, Interrupt}};
 
 use crate::syscall::syscall;
-use crate::task::processor::current_task;
 use crate::task::processor::current_trap_cx;
 use crate::task::processor::current_user_token;
 use crate::{config::{TRAP_CONTEXT, TRAMPOLINE}, task::{exit_current_and_run_next, suspend_current_and_run_next}};
@@ -57,7 +56,7 @@ pub fn trap_handler() -> ! {
       | Trap::Exception(Exception::StorePageFault)
       | Trap::Exception(Exception::LoadFault)
       | Trap::Exception(Exception::LoadPageFault) => {
-      println!("[kernel] PageFault in application, bad addr = {:#x}, bad instruction = {:#x}, kernel killed it.", stval, cx.sepc);
+      println!("[kernel] {:?} in application, bad addr = {:#x}, bad instruction = {:#x}, kernel killed it.", scause.cause(), stval, cx.sepc);
       exit_current_and_run_next(-2);
     }
     Trap::Exception(Exception::IllegalInstruction) => {

@@ -1,7 +1,4 @@
 //! Load user applications into memory
-
-use core::num;
-
 use alloc::vec::Vec;
 
 lazy_static! {

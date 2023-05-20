@@ -43,9 +43,9 @@ sudo apt-get install gdb-multiarch
 
 - [x] Timer interrupt: remove from rust-sbi
 
-- [ ] Trap SIP clear when trap_return
+- [x] Trap SIP clear when trap_return
 
-- [ ] sbrk
+- [ ] sbrk: Dynamic User Stack Allocation
 
 - [ ] Random location memory
 

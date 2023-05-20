@@ -25,7 +25,7 @@ pub fn sys_read(fd: usize, buf: *const u8, len: usize) -> isize {
   match fd {
     FD_STDIN => {
       assert_eq!(len, 1, "Only support len = 1 in sys_read");
-      let mut c: usize;
+      let c: usize;
       loop {
         c = console_getchar();
         assert_ne!(c, 0);
