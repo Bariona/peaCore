@@ -2,7 +2,7 @@ use core::{cell::RefMut};
 
 use alloc::{vec::Vec, sync::{Arc, Weak}};
 
-use crate::{mm::{memory_set::{MemorySet, KERNEL_SPACE}, address::{VirtAddr, PhysPageNum}}, config::TRAP_CONTEXT, trap::{context::TrapContext, trap_handler}, sync::up::UPSafeCell};
+use crate::{mm::{memory_set::{MemorySet, KERNEL_SPACE}, address::{VirtAddr, PhysPageNum, VirtPageNum}}, config::TRAP_CONTEXT, trap::{context::TrapContext, trap_handler}, sync::up::UPSafeCell};
 
 use super::{context::TaskContext, pid::{PidHandler, KernelStack, pid_alloc}};
 
@@ -22,6 +22,7 @@ pub struct TaskControlBlock {
 pub struct TaskControlBlockInner {
   pub task_status: TaskStatus,
   pub memory_set: MemorySet,    /// task's user memory space
+  pub user_stack_bottom: VirtPageNum,
   pub task_cx: TaskContext,
   pub trap_cx_ppn: PhysPageNum, /// trap function() (i.e. trampoline)'s physical page number
   pub base_size: usize,         /// total memory size
@@ -53,7 +54,7 @@ impl TaskControlBlock {
   }
 
   pub fn new(elf_data: &[u8]) -> Self {
-    let (memory_set, user_sp, entry_point) = MemorySet::from_elf(elf_data);
+    let (memory_set, user_sp_bottom, user_sp, entry_point) = MemorySet::from_elf(elf_data);
     // note that `memory_set` is for the user address space
     // but, ... we are currently in the S-mode
     let trap_cx_ppn = memory_set
@@ -71,6 +72,7 @@ impl TaskControlBlock {
           UPSafeCell::new(TaskControlBlockInner {
             task_status: TaskStatus::Ready,
             memory_set,
+            user_stack_bottom: user_sp_bottom.into(),
             task_cx: TaskContext::goto_trap_return(kernel_stack_top),
             trap_cx_ppn,
             base_size: user_sp,
@@ -95,7 +97,7 @@ impl TaskControlBlock {
   }
 
   pub fn exec(&self, elf_data: &[u8]) {
-    let (memory_set, user_sp, entry_point) = MemorySet::from_elf(elf_data);
+    let (memory_set, user_sp_bottom, user_sp, entry_point) = MemorySet::from_elf(elf_data);
     let trap_cx_ppn = memory_set
       .translate(VirtAddr::from(TRAP_CONTEXT).into())
       .unwrap()
@@ -104,6 +106,8 @@ impl TaskControlBlock {
     let mut inner = self.inner_exclusive_access();
     // update PCB's info
     inner.memory_set = memory_set;
+    inner.user_stack_bottom = VirtAddr::from(user_sp_bottom).floor();
+
     inner.trap_cx_ppn = trap_cx_ppn;
     inner.base_size = user_sp;
     let trap_cx = inner.get_trap_cx();
@@ -125,7 +129,6 @@ impl TaskControlBlock {
       .translate(VirtAddr::from(TRAP_CONTEXT).into())
       .unwrap()
       .ppn();
-  
     let pid_handler = pid_alloc();
     let kernel_stack = KernelStack::new(&pid_handler);
     let kernel_stack_top = kernel_stack.get_top();
@@ -137,6 +140,7 @@ impl TaskControlBlock {
         UPSafeCell::new(TaskControlBlockInner {
           task_status: parent_inner.task_status, // TODO: task_status: Ready
           memory_set,
+          user_stack_bottom: parent_inner.user_stack_bottom,
           task_cx: TaskContext::goto_trap_return(kernel_stack_top),
           trap_cx_ppn,
           base_size: parent_inner.base_size,

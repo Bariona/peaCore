@@ -9,12 +9,12 @@ use user_lib::{console::{putchar, getint, putint}, println};
 
 #[no_mangle]
 fn main() -> i32 {
-  loop {
-    let x = getint();
-    putint(x);
-    println!("");
-    // putchar(b'#');
-  }
+  // loop {
+  //   let x = getint();
+  //   putint(x);
+  //   println!("");
+  //   // putchar(b'#');
+  // }
   let p: *mut i32 = ptr::null_mut();
   unsafe {
     *p = 10;

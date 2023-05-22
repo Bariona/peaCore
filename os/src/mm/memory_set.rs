@@ -1,4 +1,5 @@
 use core::arch::asm;
+use core::cmp::max;
 
 use alloc::{collections::BTreeMap, sync::Arc};
 
@@ -6,6 +7,7 @@ use bitflags::bitflags;
 use alloc::vec::Vec;
 use riscv::register::satp;
 use crate::board::MMIO;
+use crate::config::USER_STACK_TOP;
 use crate::{config::{PAGE_SIZE, TRAMPOLINE, MEMORY_ENDPOINT, USER_STACK_SIZE, TRAP_CONTEXT}, mm::address::StepByOne, sync::up::UPSafeCell};
 
 use super::{page_table::{PageTable, PTEFlags, PageTableEntry}, address::{VPNRange, VirtPageNum, VirtAddr, PhysPageNum, PhysAddr}, frame_allocator::{FrameTracker, frame_alloc}};
@@ -166,7 +168,7 @@ impl MemorySet {
   /// In user address space: create trampoline, trapContext and userStack,
   /// 
   /// also returns user_stack_pointer and its entry_point
-  pub fn from_elf(elf_data: &[u8]) -> (Self, usize, usize) {
+  pub fn from_elf(elf_data: &[u8]) -> (Self, usize, usize, usize) {
     let mut memory_set = Self::new_bare();
     memory_set.map_trampoline();
     let elf = xmas_elf::ElfFile::new(elf_data).unwrap();
@@ -192,10 +194,9 @@ impl MemorySet {
         if ph_flags.is_execute() {
           map_perm |= MapPermission::X;
         } 
-        // println!("{:?} {:?}", start_va, end_va);
         let map_area = MapArea::new(start_va, end_va, MapType::Framed, map_perm);
         max_end_vpn = map_area.vpn_range.get_end();
-        // println!(" elf: begin: {:?}, end: {:?}, {:?}", start_va, end_va, map_perm);
+        // println!("elf: begin: {:?}, end: {:?}, {:?}", start_va, end_va, map_perm);
         memory_set.push(
           map_area, 
           Some(&elf.input[ph.offset() as usize .. (ph.offset() + ph.file_size()) as usize])
@@ -206,7 +207,10 @@ impl MemorySet {
     let mut user_stack_bottom: usize = max_end_va.into();
     user_stack_bottom += PAGE_SIZE; // add guard page
 
-    let user_stack_top: usize = user_stack_bottom + USER_STACK_SIZE;
+    // let user_stack_top: usize = user_stack_bottom + USER_STACK_SIZE;
+    user_stack_bottom = max(user_stack_bottom, USER_STACK_TOP - USER_STACK_SIZE);
+    let user_stack_top: usize = USER_STACK_TOP;
+
     memory_set.push(
       MapArea::new(
         user_stack_bottom.into(),
@@ -237,7 +241,7 @@ impl MemorySet {
       None
     );
     // return (memoryset, user_stack_top, _start)
-    (memory_set, user_stack_top, elf.header.pt2.entry_point() as usize)
+    (memory_set, user_stack_bottom, user_stack_top, elf.header.pt2.entry_point() as usize)
   }
 
   pub fn activate(&self) {
@@ -248,6 +252,7 @@ impl MemorySet {
     }
   }
 
+  /// copy a user space
   pub fn from_existed_user(user_space: &Self) -> Self {
     let mut memory_set = Self::new_bare();
     memory_set.map_trampoline();
@@ -262,8 +267,7 @@ impl MemorySet {
     }
     memory_set
   }
-
-  /// TODO: Remove all `MapArea`
+  /// Remove all `MapArea`
   pub fn recycle_data_pages(&mut self) {
     self.areas.clear();
   }
@@ -302,6 +306,21 @@ impl MemorySet {
       false
     }
   }
+
+  /// expand process's sp -> [new_start.floor(), sp_end]
+  pub fn expand_sp(&mut self, sp_end: VirtAddr, new_start: VirtAddr) -> bool {
+    if let Some(area) = self
+      .areas
+      .iter_mut()
+      .find(|area| area.vpn_range.get_end() == sp_end.ceil()) {
+      // println!("{:?} {:?} {:?} {:?}", sp_end, new_start, area.vpn_range.get_start(), area.vpn_range.get_end());
+      area.expand_sp(&mut self.page_table, new_start.floor());
+      true
+    } else {
+      false
+    }
+  }
+
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -435,6 +454,14 @@ impl MapArea {
       self.map_one(page_table, vpn);
     }
     self.vpn_range = VPNRange::new(self.vpn_range.get_start(), new_end);
+  }
+
+  pub fn expand_sp(&mut self, page_table: &mut PageTable, new_sp: VirtPageNum) {
+    // println!("{:?} {:?}", new_sp, self.vpn_range.get_end());
+    for vpn in VPNRange::new(new_sp, self.vpn_range.get_start()) {
+      self.map_one(page_table, vpn)
+    }
+    self.vpn_range = VPNRange::new(new_sp, self.vpn_range.get_end());
   }
 }
 

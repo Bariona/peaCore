@@ -3,7 +3,12 @@ use core::arch::asm;
 
 use riscv::register::{utvec::TrapMode, stvec, scause, stval, scause::{Trap, Exception, Interrupt}};
 
+use crate::config::PAGE_SIZE;
+use crate::config::USER_STACK_MAX_SIZE;
+use crate::config::USER_STACK_TOP;
+use crate::mm::address::VirtAddr;
 use crate::syscall::syscall;
+use crate::task::processor::current_task;
 use crate::task::processor::current_trap_cx;
 use crate::task::processor::current_user_token;
 use crate::{config::{TRAP_CONTEXT, TRAMPOLINE}, task::{exit_current_and_run_next, suspend_current_and_run_next}};
@@ -39,11 +44,11 @@ pub fn trap_from_kernel() -> ! {
 #[no_mangle]
 pub fn trap_handler() -> ! {
   set_kernel_trap_entry(); 
-  let mut cx = current_trap_cx();
   let scause = scause::read();
   let stval = stval::read();
   match scause.cause() {
     Trap::Exception(Exception::UserEnvCall) => {
+      let mut cx = current_trap_cx();
       cx.sepc += 4;
       let syscall_id = cx.x[17];
       // println!("handling syscall: {}", syscall_id);
@@ -56,8 +61,23 @@ pub fn trap_handler() -> ! {
       | Trap::Exception(Exception::StorePageFault)
       | Trap::Exception(Exception::LoadFault)
       | Trap::Exception(Exception::LoadPageFault) => {
-      println!("[kernel] {:?} in application, bad addr = {:#x}, bad instruction = {:#x}, kernel killed it.", scause.cause(), stval, cx.sepc);
-      exit_current_and_run_next(-2);
+      let task = current_task().unwrap();
+      let mut inner = task.inner_exclusive_access();
+      let sp = inner.user_stack_bottom;
+      if VirtAddr::from(stval).ceil() == sp && stval > USER_STACK_TOP - USER_STACK_MAX_SIZE {
+        let new_sp: usize = Into::<usize>::into(VirtAddr::from(sp)) - 2 * PAGE_SIZE;
+        inner.memory_set.expand_sp(USER_STACK_TOP.into(), VirtAddr::from(new_sp));
+        inner.user_stack_bottom = VirtAddr::from(new_sp).into();
+        drop(inner);
+        drop(task);
+        suspend_current_and_run_next();
+      } else {
+        drop(inner);
+        drop(task);
+        let cx = current_trap_cx();
+        println!("[kernel] {:?} in application, bad addr = {:#x}, bad instruction = {:#x}, kernel killed it.", scause.cause(), stval, cx.sepc);
+        exit_current_and_run_next(-2);
+      }
     }
     Trap::Exception(Exception::IllegalInstruction) => {
       println!("[kernel] IllegalInstruction in application, kernel killed it.");
