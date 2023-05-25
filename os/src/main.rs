@@ -4,11 +4,6 @@
 #![feature(alloc_error_handler)]
 #![feature(fn_align)]
 
-/*
-#![feature(custom_test_frameworks)]
-#![test_runner(crate::test_runner)]
-*/
-
 extern crate alloc;
 
 #[macro_use]
@@ -39,15 +34,6 @@ use core::{arch::global_asm};
 
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));
-
-/*
-#[cfg(test)]
-fn test_runner(tests: &[&dyn Fn()]) {
-	for test in tests {
-		test();
-	}
-}
-*/
 
 #[no_mangle]
 pub fn rust_main() -> ! {
