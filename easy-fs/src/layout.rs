@@ -1,4 +1,6 @@
 //! Layout of FileSystem Structure
+//! Including `SuperBlock`, `DiskInode`, `DirEntry`
+
 use core::{fmt::{Debug, Result, Formatter}, mem::size_of, cmp::min};
 
 use alloc::{sync::Arc, vec::Vec};
@@ -61,6 +63,7 @@ impl SuperBlock {
     }
   }
 
+  #[allow(unused)]
   pub fn is_valid(&self) -> bool {
     self.magic == FS_MAGIC
   }
@@ -75,8 +78,8 @@ pub enum DiskInodeType {
 
 #[repr(C)]
 pub struct DiskInode {
-  /// file's total bytes
-  size: u32, 
+  /// file's total bytes, not includes `indirects`
+  pub size: u32, 
   direct: [u32; INODE_DIRECT_COUNT],
   indirect1: u32,
   indirect2: u32,
@@ -96,6 +99,7 @@ impl DiskInode {
     self.type_ == DiskInodeType::Directory
   } 
 
+  #[allow(unused)]
   pub fn is_file(&self) -> bool {
     self.type_ == DiskInodeType::File
   }
@@ -128,6 +132,7 @@ impl DiskInode {
     Self::total_blocks(new_size) - Self::total_blocks(self.size)
   }
 
+  /// get block's id of the DiskInode
   pub fn get_block_id(&self, inner_id: u32, block_dev: &Arc<dyn BlockDevice>) -> u32 {
     let inner_id = inner_id as usize;
     if inner_id < DIRECT_BOUND {
@@ -206,26 +211,25 @@ impl DiskInode {
     let mut a0 = cur_data_blks / INODE_INDIRECT1_COUNT;
     let mut b0 = cur_data_blks % INODE_INDIRECT1_COUNT;
     let a1 = tot_data_blks / INODE_INDIRECT1_COUNT;
-    let b1 = tot_data_blks / INODE_INDIRECT1_COUNT;
+    let b1 = tot_data_blks % INODE_INDIRECT1_COUNT;
     get_block_cache(self.indirect2 as usize, block_dev.clone())
       .lock()
       .modify(0, |indirect1: &mut IndirectBlock| {
-        while a0 <= a1 {
-          while (a0 < a1) || (a0 == a1 && b0 < b1) {
-            if b0 == 0 {
-              indirect1[a0] = blk_iter.next().unwrap();
-            }
-            // modify (a0, b0)
-            get_block_cache(indirect1[a0] as usize, block_dev.clone())
-              .lock()
-              .modify(0, |indirect2: &mut IndirectBlock| {
-                indirect2[b0] = blk_iter.next().unwrap();
-              }); 
-            b0 += 1;
-            if b0 == INODE_INDIRECT1_COUNT {
-              b0 = 0;
-              a0 += 1;
-            }
+        while (a0 < a1) || (a0 == a1 && b0 < b1) {
+          if b0 == 0 {
+            indirect1[a0] = blk_iter.next().unwrap();
+          }
+          // modify (a0, b0)
+          get_block_cache(indirect1[a0] as usize, block_dev.clone())
+            .lock()
+            .modify(0, |indirect2: &mut IndirectBlock| {
+              indirect2[b0] = blk_iter.next().unwrap();
+            }); 
+          
+          b0 += 1;
+          if b0 == INODE_INDIRECT1_COUNT {
+            b0 = 0;
+            a0 += 1;
           }
         }
       });
@@ -273,21 +277,31 @@ impl DiskInode {
     tot_data_blks -= INODE_INDIRECT1_COUNT;
     cur_data_blks -= INODE_INDIRECT1_COUNT;
 
+    assert_eq!(cur_data_blks, 0);
+    assert!(tot_data_blks <= INODE_INDIRECT2_COUNT);
     get_block_cache(self.indirect2 as usize, block_dev.clone())
       .lock()
       .modify(0, |indirect1: &mut IndirectBlock| {
         let mut retrived: usize = 0;
-        while retrived * INODE_INDIRECT1_COUNT <= tot_data_blks {
+        while retrived * INODE_INDIRECT1_COUNT < tot_data_blks {
           get_block_cache(indirect1[retrived] as usize, block_dev.clone())
             .lock()
             .modify(0, |indirect2: &mut IndirectBlock| {
               let mut i: usize = 0;
-              while cur_data_blks <= min(INODE_INDIRECT1_COUNT, tot_data_blks) {
+              while cur_data_blks < tot_data_blks && i < INODE_INDIRECT1_COUNT {
+                assert_ne!(0, indirect2[i], 
+                  "Error message: i = {} 
+                  retrived = {} 
+                  cur_data_blks = {} 
+                  tot_data_blks = {} 
+                  indirect1 = {}", 
+                  i, retrived, cur_data_blks, tot_data_blks, indirect1[retrived]);
                 vec.push(indirect2[i]);
                 i += 1;
                 cur_data_blks += 1;
               }
             });
+            assert_ne!(0, indirect1[retrived]);
           vec.push(indirect1[retrived]);
           retrived += 1;
         }
@@ -316,7 +330,8 @@ impl DiskInode {
         block_dev.clone()
       ) .lock()
         .read(0, |data: &DataBlock| {
-          assert!(start % BLOCK_SZ + block_read_size < BLOCK_SZ);
+          assert!(start % BLOCK_SZ + block_read_size <= BLOCK_SZ, 
+            "start: {}, end: {}, read size: {}", start, cur_block_end, start % BLOCK_SZ + block_read_size);
           let src = &data[start % BLOCK_SZ..start % BLOCK_SZ + block_read_size];
           dst.copy_from_slice(src);
         });
@@ -344,12 +359,14 @@ impl DiskInode {
       let cur_block_end = min(end, (start / BLOCK_SZ + 1) * BLOCK_SZ);
       let block_read_size = cur_block_end - start;
       let src = &buf[write_size..write_size + block_read_size];
+      // start_block[start, cur_block_end]
       get_block_cache(
         self.get_block_id(start_block as u32, block_dev) as usize, 
         block_dev.clone()
       ) .lock()
         .modify(0, |data: &mut DataBlock| {
-          assert!(start % BLOCK_SZ + block_read_size < BLOCK_SZ);
+          assert!(start % BLOCK_SZ + block_read_size <= BLOCK_SZ, 
+            "start: {}, end: {}, read size: {}", start, cur_block_end, start % BLOCK_SZ + block_read_size);
           let dst = &mut data[start % BLOCK_SZ..start % BLOCK_SZ + block_read_size];
           dst.copy_from_slice(src);
         });
@@ -384,7 +401,7 @@ impl DirEntry {
 
   pub fn new(name: &str, inode: u32) -> Self {
     let mut bytes = [0u8; NAME_LENGTH_LIMIT + 1];
-    bytes.copy_from_slice(name.as_bytes());
+    bytes[..name.len()].copy_from_slice(name.as_bytes());
     Self { 
       name: bytes,
       inode 

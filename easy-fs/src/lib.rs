@@ -10,4 +10,8 @@ mod fs;
 mod vfs;
 
 pub const BLOCK_SZ: usize = 512;
+pub use fs::FileSystem;
+pub use block_dev::BlockDevice;
+
 type DataBlock = [u8; BLOCK_SZ];
+

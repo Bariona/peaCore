@@ -1,7 +1,8 @@
+//! implentation of a easy FileSystem
 use alloc::sync::Arc;
 use spin::Mutex;
 
-use crate::{block_dev::BlockDevice, bitmap::Bitmap, layout::{DiskInode, SuperBlock, DiskInodeType}, BLOCK_SZ, block_cache::{get_block_cache, block_cache_sync_all}, DataBlock};
+use crate::{block_dev::BlockDevice, bitmap::Bitmap, layout::{DiskInode, SuperBlock, DiskInodeType}, BLOCK_SZ, block_cache::{get_block_cache, block_cache_sync_all}, DataBlock, vfs::Inode};
 
 pub struct FileSystem {
   pub block_dev: Arc<dyn BlockDevice>,
@@ -108,6 +109,7 @@ impl FileSystem {
       .modify(0, |data: &mut DataBlock| {
         data.iter_mut().for_each(|byte| *byte = 0);
       });
+    assert!(data_id >= self.data_area_start_block as usize, "{} {}", data_id, self.data_area_start_block);
     self.data_bitmap.dealloc(&self.block_dev, data_id - self.data_area_start_block as usize);
   }
 
@@ -119,6 +121,17 @@ impl FileSystem {
     (
       block_id,
       inode_id % inodes_per_block * inode_size
+    )
+  }
+
+  pub fn root_inode(fs: &Arc<Mutex<FileSystem>>) -> Inode {
+    let block_dev = fs.lock().block_dev.clone();
+    let (root_inode_blk_id, root_inode_offset) = fs.lock().get_disk_inode_pos(0);
+    Inode::new(
+      root_inode_blk_id,
+      root_inode_offset, 
+      fs.clone(), 
+      block_dev
     )
   }
 }
