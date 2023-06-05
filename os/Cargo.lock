@@ -51,6 +51,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6548a0ad5d2549e111e1f6a11a6c2e2d00ce6a3dafe22948d67c2b443f775e52"
 
 [[package]]
+name = "easy-fs"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "spin 0.7.1",
+]
+
+[[package]]
 name = "embedded-hal"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -114,11 +122,13 @@ name = "os"
 version = "0.1.0"
 dependencies = [
  "bitflags",
+ "easy-fs",
  "lazy_static",
  "riscv 0.10.1",
  "riscv 0.6.0",
  "spin 0.9.8",
  "uart_16550",
+ "virtio-drivers",
  "xmas-elf",
 ]
 
@@ -216,6 +226,12 @@ checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 
 [[package]]
 name = "spin"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "13287b4da9d1207a4f4929ac390916d64eacfe236a487e9a9f5b3be392be5162"
+
+[[package]]
+name = "spin"
 version = "0.9.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
@@ -235,10 +251,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "virtio-drivers"
+version = "0.1.0"
+source = "git+https://github.com/rcore-os/virtio-drivers?rev=4ee80e5#4ee80e50babd681869f428ee026167bc12dc6856"
+dependencies = [
+ "bitflags",
+ "log",
+ "volatile 0.3.0",
+]
+
+[[package]]
 name = "void"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d"
+
+[[package]]
+name = "volatile"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8e76fae08f03f96e166d2dfda232190638c10e0383841252416f9cfe2ae60e6"
 
 [[package]]
 name = "volatile"
@@ -255,7 +287,7 @@ dependencies = [
  "bit_field",
  "bitflags",
  "rustversion",
- "volatile",
+ "volatile 0.4.6",
 ]
 
 [[package]]

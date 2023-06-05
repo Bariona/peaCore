@@ -4,6 +4,7 @@ use spin::Mutex;
 
 use crate::{block_dev::BlockDevice, bitmap::Bitmap, layout::{DiskInode, SuperBlock, DiskInodeType}, BLOCK_SZ, block_cache::{get_block_cache, block_cache_sync_all}, DataBlock, vfs::Inode};
 
+/// FS on memory
 pub struct FileSystem {
   pub block_dev: Arc<dyn BlockDevice>,
   pub inode_bitmap: Bitmap,

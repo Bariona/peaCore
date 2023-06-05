@@ -1,4 +1,4 @@
-use alloc::{vec::Vec, string::String};
+use alloc::{vec::Vec, string::String, collections::binary_heap::IntoIter};
 use bitflags::bitflags;
 
 use alloc::vec;
@@ -205,7 +205,6 @@ pub fn translated_str(token: usize, ptr: *const u8) -> String {
       va += 1;
     }
   }
-  // println!("$$$$$$$$$$$$$ {}", str);
   str
 }
 
@@ -215,4 +214,58 @@ pub fn translated_refmut<T>(token: usize, ptr: *const T) -> &'static mut T {
     .translate_va((ptr as usize).into())
     .unwrap()
     .get_mut()
+}
+
+pub struct UserBuffer {
+  pub buffers: Vec<&'static mut [u8]>,
+}
+
+impl UserBuffer {
+  pub fn new(buffers: Vec<&'static mut [u8]>) -> Self {
+    Self { buffers }
+  }
+
+  pub fn len(&self) -> usize {
+    let mut len = 0;
+    self.buffers.iter().for_each(|seg| len += seg.len());
+    len
+  }
+}
+
+pub struct UserBufferIterator {
+  buffers: Vec<&'static mut [u8]>,
+  seg_id: usize,
+  inner_offset: usize,
+}
+
+impl Iterator for UserBufferIterator {
+  type Item = *mut u8;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    if self.seg_id >= self.buffers.len() {
+      None
+    } else {
+      let r = &mut self.buffers[self.seg_id][self.inner_offset] as *mut u8;
+      if self.inner_offset + 1 == self.buffers[self.seg_id].len() {
+        self.seg_id += 1;
+        self.inner_offset = 0;
+      } else {
+        self.inner_offset += 1;
+      }
+      Some(r)
+    }
+  }
+}
+impl IntoIterator for UserBuffer {
+  type Item = *mut u8;
+
+  type IntoIter = UserBufferIterator;
+
+  fn into_iter(self) -> Self::IntoIter {
+    UserBufferIterator {
+      buffers: self.buffers,
+      seg_id: 0,
+      inner_offset: 0,
+    }
+  }
 }

@@ -3,6 +3,8 @@ MODE := release
 
 KERNEL_ELF := target/$(TARGET)/$(MODE)/os
 KERNEL_BIN := $(KERNEL_ELF).bin
+FS_IMG := ../user/target/$(TARGET)/$(MODE)/fs.img
+APPS := ../user/src/bin/*
 
 # kernel entry
 KERNEL_ENTRY_PA := 0x80000000
@@ -18,6 +20,9 @@ ifeq ($(MODE), release)
 	MODE_ARG := --release
 endif
 
+# Run usertests or usershell
+TEST ?= 
+
 # Binutils
 OBJDUMP := rust-objdump --arch-name=riscv64
 OBJCOPY := rust-objcopy --binary-architecture=riscv64
@@ -28,10 +33,18 @@ env:
 	rustup component add rust-src
 	rustup component add llvm-tools-preview
 
-build: env $(KERNEL_BIN)
+build: env $(KERNEL_BIN) fs-img
 
 $(KERNEL_BIN): kernel
 	@$(OBJCOPY) --strip-all $(KERNEL_ELF) -O binary $@
+
+fs-img: $(APPS)
+	@cd ../user && make build TEST=$(TEST)
+	@rm -rf $(FS_IMG)
+	@cd ../easy-fs-fuse && cargo run --$(MODE) -- -s=../user/src/bin/ -d=../user/target/$(TARGET)/$(MODE)/
+
+$(APPS):
+	@echo $(APPS)
 
 kernel: 
 	@cd ../user && make build
@@ -44,7 +57,9 @@ run: build
 		-machine virt \
 		-nographic \
 		-bios none \
-		-device loader,file=$(KERNEL_BIN),addr=$(KERNEL_ENTRY_PA)
+		-device loader,file=$(KERNEL_BIN),addr=$(KERNEL_ENTRY_PA) \
+		-drive file=$(FS_IMG),if=none,format=raw,id=x0 \
+		-device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
 	
 debug: build
 	@tmux new-session -d \
@@ -55,3 +70,5 @@ debug: build
 # remove ./target directory
 clean:
 	@cargo clean
+
+.PHONY: build env kernel clean run-inner fs-img

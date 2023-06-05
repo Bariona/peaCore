@@ -24,8 +24,63 @@ impl BlockDevice for BlockFile {
     assert_eq!(file.write(buf).unwrap(), BLOCK_SZ, "Not a complete block!");
   }
 }
-pub fn main() {
 
+pub fn main() {
+  fs_pack().expect("Error when creating fs.img");
+}
+
+fn fs_pack() -> std::io::Result<()> {
+  let matches = App::new("FileSystem packer")
+    .arg(
+      Arg::with_name("source")
+        .short("src")
+        .long("source")
+        .takes_value(true)
+        .help("Executable source dir(with backslash)")
+    )
+    .arg(
+      Arg::with_name("target")
+        .short("dst")
+        .long("target")
+        .takes_value(true)
+        .help("Executable target dir(with backslash)")
+    ).get_matches();
+  
+  let src = matches.value_of("source").unwrap();
+  let dst = matches.value_of("target").unwrap();
+
+  println!("src = {}, dst = {}", src, dst);
+  let file_size = 16 * 2048 * 512; // 16MB allocated
+  let file = Arc::new(BlockFile(Mutex::new({
+    let f = OpenOptions::new()
+      .read(true)
+      .write(true)
+      .create(true)
+      .open(format!("{}{}", dst, "fs.img")).unwrap();
+    f.set_len(file_size).unwrap(); 
+    f
+  })));
+
+  let fs = FileSystem::create(file.clone(), file_size as u32 / 512, 1);
+  let root_inode = Arc::new(FileSystem::root_inode(&fs));
+
+  let apps:Vec<_> = read_dir(src)?
+    .into_iter()
+    .map(|direntry| {
+      let mut elf_name = direntry.unwrap().file_name().into_string().unwrap();
+      elf_name.drain(elf_name.find('.').unwrap()..elf_name.len());
+      elf_name
+    }).collect();
+  
+  for app in apps {
+    // println!("app path = {}", format!("{}{}", dst, app));
+    let mut app_file = File::open(format!("{}{}", dst, app)).unwrap();
+    let mut app_data = Vec::new();
+    app_file.read_to_end(&mut app_data).unwrap();
+    let app_inode = root_inode.create(app.as_str()).unwrap();
+    app_inode.write_at(0, &app_data);
+  }
+  Ok(())
 }
 
 

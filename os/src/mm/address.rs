@@ -206,8 +206,14 @@ pub trait StepByOne {
 
 impl StepByOne for VirtPageNum {
   fn step(&mut self) {
-      self.0 += 1;
+    self.0 += 1;
   }
+}
+
+impl StepByOne for PhysPageNum {
+  fn step(&mut self) {
+    self.0 += 1;
+  } 
 }
 
 #[derive(Copy, Clone)]

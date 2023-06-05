@@ -10,6 +10,8 @@ mod fs;
 mod vfs;
 
 pub const BLOCK_SZ: usize = 512;
+
+pub use vfs::Inode;
 pub use fs::FileSystem;
 pub use block_dev::BlockDevice;
 

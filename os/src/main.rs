@@ -5,18 +5,21 @@
 #![feature(fn_align)]
 
 extern crate alloc;
+extern crate virtio_drivers;
+#[macro_use]
+extern crate lazy_static;
 
 #[macro_use]
 mod console;
 
-#[macro_use]
-extern crate lazy_static;
 
 #[path = "boards/qemu.rs"]
 mod board;
 
 mod config;
 mod ds;
+mod drivers;
+mod fs;
 mod start;
 mod sync;
 mod sbi;
@@ -41,6 +44,7 @@ pub fn rust_main() -> ! {
 	ds::test();
 	mm::init();
 	mm::remap_test();
+	drivers::block_device_test();
 	trap::init();
 
 	task::add_initproc();

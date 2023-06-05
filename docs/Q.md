@@ -15,4 +15,5 @@
 
 
 - [x] Exception 和 interrupt, trap的区别到底是什么?
-- [ ] U-mode 中的stack由buddy接管, 但是既然大小不能改变, brk()改变的又是什么?
+- [x] U-mode 中的stack由buddy接管, 但是既然大小不能改变, brk()改变的又是什么?
+    用户的堆空间

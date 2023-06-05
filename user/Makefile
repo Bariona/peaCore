@@ -11,10 +11,21 @@ BINS := $(patsubst $(APP_DIR)/%.rs, $(TARGET_DIR)/%.bin, $(APPS))
 OBJDUMP := rust-objdump --arch-name=riscv64
 OBJCOPY := rust-objcopy --binary-architecture=riscv64
 
-elf:
+# testcase
+TEST ?= 
+
+elf: $(APPS)
 	@cargo build --release
+ifeq ($(TEST), 1)
+	@cp $(TARGET_DIR)/usertests $(TARGET_DIR)/initproc
+endif
 
 binary: elf
 	@$(foreach elf, $(ELFS), $(OBJCOPY) $(elf) --strip-all -O binary $(patsubst $(TARGET_DIR)/%, $(TARGET_DIR)/%.bin, $(elf));)
 
 build: binary
+
+clean:
+	@cargo clean
+
+.PHONY: elf binary clean build

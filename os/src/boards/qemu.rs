@@ -4,12 +4,14 @@ const VIRT_TEST: u64 = 0x100000;
 pub const QEMU_BASE_ADDRESS: usize = 0x8000_0000;
 pub const KERNEL_MAX_ALLOCED_ADDRESS: usize = MEMORY_ENDPOINT;
 pub const UART_BASE_ADDRESS: usize = 0x1000_0000;
+pub const VIRTIO_BASE_ADDRESS: usize = 0x1000_1000;
 
 pub const CLOCK_FREQ: usize = 12500000;
 
 pub const MMIO: &[(usize, usize)] = &[
-    (0x0010_0000, 0x00_2000), // VIRT_TEST/RTC  in virt machine
-    (UART_BASE_ADDRESS, 0x00_1000)
+    (0x0010_0000, 0x00_2000), // VIRT_TEST/RTC in virt machine
+    (UART_BASE_ADDRESS, 0x00_1000),
+    (VIRTIO_BASE_ADDRESS, 0x00_1000),
 ];
 
 // TODO: RISCV64 what's hifive_test?

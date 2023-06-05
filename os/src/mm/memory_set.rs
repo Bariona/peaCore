@@ -30,6 +30,11 @@ lazy_static! {
     Arc::new( unsafe { UPSafeCell::new(MemorySet::new_kernel()) } );
 }
 
+/// get kernel's satp
+pub fn kernel_token() -> usize {
+  KERNEL_SPACE.exclusive_access().token()
+}
+
 /// All MapAreas shares the same page_table, but their PTE permissions differ.
 pub struct MemorySet {
   page_table: PageTable,

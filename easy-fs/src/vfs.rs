@@ -104,10 +104,10 @@ impl Inode {
       return None;
     }
     let new_inode_id = fs.alloc_inode();
-    let (new_inode_block_id, new_inode_inner_block_offest) = fs.get_disk_inode_pos(new_inode_id as usize);
-    get_block_cache(new_inode_block_id, self.block_dev.clone())
+    let (block_id, block_offset) = fs.get_disk_inode_pos(new_inode_id as usize);
+    get_block_cache(block_id, self.block_dev.clone())
       .lock()
-      .modify(new_inode_inner_block_offest, |new_inode: &mut DiskInode| {
+      .modify(block_offset, |new_inode: &mut DiskInode| {
         new_inode.initialize(DiskInodeType::File);
       });
     self.modify_disk_inode(|root_inode| {
@@ -118,10 +118,7 @@ impl Inode {
       root_inode.write_at(file_count * DIRENT_SZ, dirent.as_bytes(), &self.block_dev);
     });
     
-    let (block_id, block_offset) = fs.get_disk_inode_pos(new_inode_id as usize);
     block_cache_sync_all();
-    assert_eq!(block_id, new_inode_block_id);
-    assert_eq!(block_offset, new_inode_inner_block_offest);
     Some(Arc::new(
       Self::new(
         block_id, 
