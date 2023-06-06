@@ -105,15 +105,6 @@ impl BlockCacheManager {
         } else {
           panic!("Run out of Block Cache entries");
         } 
-
-        // if let Some((idx, _)) =  
-        //   self.queue
-        //   .iter()
-        //   .find(|entry| Arc::strong_count(&entry.1) == 1) {
-        //   self.queue.drain(idx..=idx);
-        // } else {
-        //   panic!("Run out of Block Cache entries");
-        // } 
       } 
       let cache_entry = Arc::new(Mutex::new(BlockCache::new(block_id, block_device)));
       self.queue.push_back((block_id, cache_entry.clone()));

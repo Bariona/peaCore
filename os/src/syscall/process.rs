@@ -1,6 +1,6 @@
 use alloc::sync::Arc;
 
-use crate::{task::{exit_current_and_run_next, suspend_current_and_run_next, processor::{current_user_token, current_task}, add_task}, timer::get_time_ms, mm::{translated_str, translated_refmut}, loader::get_app_data_by_name};
+use crate::{task::{exit_current_and_run_next, suspend_current_and_run_next, processor::{current_user_token, current_task}, add_task}, timer::get_time_ms, mm::{translated_str, translated_refmut}, fs::{open_file, Flags}};
 
 /// exit current task
 pub fn sys_exit(exit_code: i32) -> ! {
@@ -39,10 +39,10 @@ pub fn sys_exec(path_ptr: *const u8) -> isize {
   let path = translated_str(token, path_ptr);
   // println!("{} {}", current_task().unwrap().pid.0, path);
 
-  if let Some(elf_data) = get_app_data_by_name(path.as_str()) {
+  if let Some(file) = open_file(path.as_str(), Flags::RDONLY) {
     // println!("{} {}", current_task().unwrap().pid.0, path);
     let task = current_task().unwrap();
-    task.exec(elf_data);
+    task.exec(file.read_all().as_slice());
     0
   } else {
     -1

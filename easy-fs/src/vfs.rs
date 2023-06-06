@@ -1,3 +1,5 @@
+// use std::println;
+
 use alloc::{sync::Arc, vec::Vec, string::{String, ToString}};
 use spin::{Mutex, MutexGuard};
 
@@ -62,7 +64,9 @@ impl Inode {
   fn find_inode_id(&self, name: &str, disk_inode: &DiskInode) -> Option<u32> {
     assert!(disk_inode.is_dir());
     let file_count = disk_inode.size as usize / DIRENT_SZ;
-    assert!(file_count * DIRENT_SZ == disk_inode.size as usize);
+
+    assert!(file_count * DIRENT_SZ == disk_inode.size as usize, 
+      "name = {}, {} {} {}", name, file_count, DIRENT_SZ, disk_inode.size);
 
     let mut dirent = DirEntry::empty();
     for i in 0..file_count {
@@ -112,10 +116,13 @@ impl Inode {
       });
     self.modify_disk_inode(|root_inode| {
       let file_count = (root_inode.size as usize) / DIRENT_SZ;
+      assert_eq!(root_inode.size as usize, file_count * DIRENT_SZ);
+
       let new_size = (file_count + 1) * DIRENT_SZ;
       self.increase_size(new_size as u32, root_inode, &mut fs);
       let dirent = DirEntry::new(name, new_inode_id);
       root_inode.write_at(file_count * DIRENT_SZ, dirent.as_bytes(), &self.block_dev);
+      // println!("{}", root_inode.size);
     });
     
     block_cache_sync_all();
@@ -160,7 +167,6 @@ impl Inode {
   pub fn write_at(&self, offset: usize, buf: &[u8]) -> usize {
     let mut fs = self.fs.lock();
     let buf_len = self.modify_disk_inode(|disk_inode: &mut DiskInode| {
-      // println!("#: {}, {}", disk_inode.size, buf.len());
       self.increase_size(disk_inode.size + buf.len() as u32, disk_inode, &mut fs);
       disk_inode.write_at(offset, buf, &self.block_dev)
     });

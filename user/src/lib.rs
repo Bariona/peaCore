@@ -10,6 +10,7 @@ mod ds;
 mod lang_items;
 mod syscall;
 
+use riscv::register::fcsr::Flags;
 use syscall::*;
 
 // ========= self-made allocator ==========
@@ -42,6 +43,28 @@ pub extern "C" fn _start() -> ! {
 #[no_mangle]
 fn main() -> i32 {
   panic!("Cannot find main!");
+}
+
+use bitflags::bitflags;
+bitflags! {
+  pub struct OpenFlags: u32 {
+    const RDONLY = 0;
+    const WRONLY = 1 << 0;
+    /// read & write
+    const RDWR = 1 << 1;
+    /// if the file doesn't exist, create it
+    const CREATE = 1 << 9;
+    /// clear file and return an empty one
+    const TRUNC = 1 << 10;
+  }
+}
+
+pub fn open(path: &str, flags: OpenFlags) -> isize {
+  sys_open(path, flags.bits)
+}
+
+pub fn close(fd: usize) -> isize {
+  sys_close(fd)
 }
 
 pub fn read(fd: usize, buf: &[u8]) -> isize {

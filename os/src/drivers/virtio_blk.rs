@@ -66,10 +66,10 @@ impl Hal for VirtioHal {
   }
 
   fn virt_to_phys(vaddr: virtio_drivers::VirtAddr) -> virtio_drivers::PhysAddr {
+    // might be data from kernel_stack, which is not identically mapped
     let phyaddr = PageTable::from_token(kernel_token())
       .translate_va(vaddr.into())
       .unwrap().0;
-    assert_eq!(vaddr, phyaddr);
     phyaddr
   }
 }

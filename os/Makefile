@@ -44,7 +44,6 @@ fs-img: $(APPS)
 	@cd ../easy-fs-fuse && cargo run --$(MODE) -- -s=../user/src/bin/ -d=../user/target/$(TARGET)/$(MODE)/
 
 $(APPS):
-	@echo $(APPS)
 
 kernel: 
 	@cd ../user && make build

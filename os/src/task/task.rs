@@ -1,8 +1,8 @@
 use core::{cell::RefMut};
 
-use alloc::{vec::Vec, sync::{Arc, Weak}};
+use alloc::{vec::Vec, vec, sync::{Arc, Weak}};
 
-use crate::{mm::{memory_set::{MemorySet, KERNEL_SPACE}, address::{VirtAddr, PhysPageNum, VirtPageNum}}, config::TRAP_CONTEXT, trap::{context::TrapContext, trap_handler}, sync::up::UPSafeCell};
+use crate::{mm::{memory_set::{MemorySet, KERNEL_SPACE}, address::{VirtAddr, PhysPageNum, VirtPageNum}}, config::TRAP_CONTEXT, trap::{context::TrapContext, trap_handler}, sync::up::UPSafeCell, fs::{File, Stdin, Stdout}};
 
 use super::{context::TaskContext, pid::{PidHandler, KernelStack, pid_alloc}};
 
@@ -27,6 +27,9 @@ pub struct TaskControlBlockInner {
   pub trap_cx_ppn: PhysPageNum, /// trap function() (i.e. trampoline)'s physical page number
   pub base_size: usize,         /// total memory size
 
+  /// fd table, None: closed fd
+  pub fd_table: Vec<Option<Arc<dyn File + Send + Sync>>>,
+
   pub parent: Option<Weak<TaskControlBlock>>,
   pub children: Vec<Arc<TaskControlBlock>>,
   pub exit_code: i32  
@@ -45,6 +48,16 @@ impl TaskControlBlockInner {
   }
   pub fn is_zombie(&self) -> bool {
     self.get_status() == TaskStatus::Zombie
+  }
+
+  pub fn alloc_fd(&mut self) -> usize {
+    for (i, fd) in self.fd_table.iter().enumerate() {
+      if fd.is_none() {
+        return i
+      }
+    }
+    self.fd_table.push(None);
+    self.fd_table.len() - 1
   }
 }
 
@@ -76,6 +89,14 @@ impl TaskControlBlock {
             task_cx: TaskContext::goto_trap_return(kernel_stack_top),
             trap_cx_ppn,
             base_size: user_sp,
+            fd_table: vec![
+              // fd 0
+              Some(Arc::new(Stdin)), 
+              // fd 1
+              Some(Arc::new(Stdout)), 
+              // fd 2
+              Some(Arc::new(Stdout))
+            ],
             parent: None,
             children: Vec::new(),
             exit_code: 0,
@@ -133,6 +154,14 @@ impl TaskControlBlock {
     let kernel_stack = KernelStack::new(&pid_handler);
     let kernel_stack_top = kernel_stack.get_top();
 
+    let mut fd_copy = Vec::new();
+    for file in &parent_inner.fd_table {
+      if let Some(inode) = file {
+        fd_copy.push(Some(inode.clone()));
+      } else {
+        fd_copy.push(None);
+      }
+    }
     let task_control_block = Arc::new(TaskControlBlock {
       pid: pid_handler,
       kernel_stack,
@@ -144,6 +173,7 @@ impl TaskControlBlock {
           task_cx: TaskContext::goto_trap_return(kernel_stack_top),
           trap_cx_ppn,
           base_size: parent_inner.base_size,
+          fd_table: fd_copy,
           parent: Some(Arc::downgrade(self)),
           children: Vec::new(),
           exit_code: 0,

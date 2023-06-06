@@ -36,7 +36,6 @@ mod uart;
 use core::{arch::global_asm};
 
 global_asm!(include_str!("entry.asm"));
-global_asm!(include_str!("link_app.S"));
 
 #[no_mangle]
 pub fn rust_main() -> ! {
@@ -44,11 +43,12 @@ pub fn rust_main() -> ! {
 	ds::test();
 	mm::init();
 	mm::remap_test();
-	drivers::block_device_test();
+	// drivers::block_device_test();
 	trap::init();
 
+	fs::list_apps();
 	task::add_initproc();
-	loader::list_apps();
+	
 	// trap::enable_timer_interrupt();
 	// timer::set_next_trigger();
 	task::processor::run_tasks();

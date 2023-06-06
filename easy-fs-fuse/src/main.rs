@@ -50,7 +50,7 @@ fn fs_pack() -> std::io::Result<()> {
   let dst = matches.value_of("target").unwrap();
 
   println!("src = {}, dst = {}", src, dst);
-  let file_size = 16 * 2048 * 512; // 16MB allocated
+  let file_size = 32 * 2048 * 512; // 32 MB allocated
   let file = Arc::new(BlockFile(Mutex::new({
     let f = OpenOptions::new()
       .read(true)
@@ -73,7 +73,7 @@ fn fs_pack() -> std::io::Result<()> {
     }).collect();
   
   for app in apps {
-    // println!("app path = {}", format!("{}{}", dst, app));
+    println!("app path = {}", format!("{}{}", dst, app));
     let mut app_file = File::open(format!("{}{}", dst, app)).unwrap();
     let mut app_data = Vec::new();
     app_file.read_to_end(&mut app_data).unwrap();
