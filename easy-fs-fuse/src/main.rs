@@ -73,7 +73,7 @@ fn fs_pack() -> std::io::Result<()> {
     }).collect();
   
   for app in apps {
-    println!("app path = {}", format!("{}{}", dst, app));
+    // println!("app path = {}", format!("{}{}", dst, app));
     let mut app_file = File::open(format!("{}{}", dst, app)).unwrap();
     let mut app_data = Vec::new();
     app_file.read_to_end(&mut app_data).unwrap();

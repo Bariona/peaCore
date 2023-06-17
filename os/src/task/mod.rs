@@ -35,7 +35,6 @@ pub const IDLE_PID: usize = 0;
 
 lazy_static! {
   pub static ref INITPROC: Arc<TaskControlBlock> = Arc::new({
-    println!("@@@@");
     let initproc = open_file("initproc", Flags::RDONLY).unwrap();
     TaskControlBlock::new(initproc.read_all().as_slice())
   });

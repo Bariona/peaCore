@@ -97,7 +97,7 @@ impl Inode {
     disk_inode.increase_size(new_size, new_blocks, &self.block_dev);
   }
 
-  /// Create Inode 
+  /// Create an Inode(file) at '/'
   pub fn create(&self, name: &str) -> Option<Arc<Inode>> {
     let mut fs = self.fs.lock();
     let op = |root_inode: &DiskInode| {
@@ -122,7 +122,6 @@ impl Inode {
       self.increase_size(new_size as u32, root_inode, &mut fs);
       let dirent = DirEntry::new(name, new_inode_id);
       root_inode.write_at(file_count * DIRENT_SZ, dirent.as_bytes(), &self.block_dev);
-      // println!("{}", root_inode.size);
     });
     
     block_cache_sync_all();

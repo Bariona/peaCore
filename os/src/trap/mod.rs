@@ -51,10 +51,8 @@ pub fn trap_handler() -> ! {
       let mut cx = current_trap_cx();
       cx.sepc += 4;
       let syscall_id = cx.x[17];
-      // println!("handling syscall: {}", syscall_id);
       let result = syscall(syscall_id, [cx.x[10], cx.x[11], cx.x[12]]);
       cx = current_trap_cx();
-      // println!("syscall: {} result: {}, current pid: {}", syscall_id, result, current_task().unwrap().getpid());
       cx.x[10] = result as usize;
     }
     Trap::Exception(Exception::StoreFault)
